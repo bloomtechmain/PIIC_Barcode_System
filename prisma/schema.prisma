@@ -1,0 +1,154 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum Role {
+  ADMIN
+  STAFF
+}
+
+enum ItemStatus {
+  ACTIVE
+  RELEASED
+}
+
+enum AuditItemStatus {
+  FOUND
+  MISSING
+  UNKNOWN
+}
+
+enum ScanType {
+  AUDIT
+  CREATE
+  VERIFY
+}
+
+// ─── Models ───────────────────────────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(STAFF)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  releases    Release[]
+  audits      Audit[]
+  barcodeLogs BarcodeLog[]
+
+  @@map("users")
+}
+
+model Customer {
+  id        String   @id @default(cuid())
+  name      String
+  nic       String   @unique
+  phone     String?
+  email     String?
+  address   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items Item[]
+
+  @@index([nic])
+  @@map("customers")
+}
+
+model Item {
+  id          String     @id @default(cuid())
+  barcode     String     @unique
+  customerId  String
+  itemType    String
+  weight      Decimal    @db.Decimal(8, 3)
+  description String?
+  pawnDate    DateTime
+  status      ItemStatus @default(ACTIVE)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  customer    Customer    @relation(fields: [customerId], references: [id])
+  release     Release?
+  auditItems  AuditItem[]
+  barcodeLogs BarcodeLog[]
+
+  @@index([barcode])
+  @@index([customerId])
+  @@index([status])
+  @@index([customerId, status])
+  @@map("items")
+}
+
+model Release {
+  id           String   @id @default(cuid())
+  itemId       String   @unique
+  releasedById String
+  releaseDate  DateTime @default(now())
+  notes        String?
+  createdAt    DateTime @default(now())
+
+  item       Item @relation(fields: [itemId], references: [id])
+  releasedBy User @relation(fields: [releasedById], references: [id])
+
+  @@index([releasedById])
+  @@index([releaseDate])
+  @@map("releases")
+}
+
+model Audit {
+  id               String    @id @default(cuid())
+  createdAt        DateTime  @default(now())
+  createdById      String
+  totalItemsAtTime Int
+  notes            String?
+  finalizedAt      DateTime? // NULL = audit still in progress
+
+  createdBy  User        @relation(fields: [createdById], references: [id])
+  auditItems AuditItem[]
+
+  @@map("audits")
+}
+
+model AuditItem {
+  id      String          @id @default(cuid())
+  auditId String
+  barcode String
+  status  AuditItemStatus
+  itemId  String?
+
+  audit Audit @relation(fields: [auditId], references: [id])
+  item  Item? @relation(fields: [itemId], references: [id])
+
+  @@unique([auditId, barcode]) // prevent duplicate scans in same audit
+  @@index([auditId])
+  @@index([barcode])
+  @@index([itemId])
+  @@index([auditId, status])
+  @@map("audit_items")
+}
+
+model BarcodeLog {
+  id          String   @id @default(cuid())
+  itemId      String
+  scannedById String?
+  scannedAt   DateTime @default(now())
+  scanType    ScanType
+
+  item      Item  @relation(fields: [itemId], references: [id])
+  scannedBy User? @relation(fields: [scannedById], references: [id])
+
+  @@index([itemId])
+  @@index([scanType])
+  @@index([scannedAt])
+  @@map("barcode_logs")
+}

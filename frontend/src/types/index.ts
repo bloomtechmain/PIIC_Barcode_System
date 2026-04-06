@@ -1,0 +1,106 @@
+export type Role = 'ADMIN' | 'STAFF'
+export type ItemStatus = 'ACTIVE' | 'RELEASED'
+export type AuditItemStatus = 'FOUND' | 'MISSING' | 'UNKNOWN'
+export type ScanType = 'AUDIT' | 'CREATE' | 'VERIFY'
+
+export interface User {
+  id: string
+  name: string
+  email: string
+  role: Role
+  createdAt: string
+}
+
+export interface Customer {
+  id: string
+  name: string
+  nic: string
+  phone?: string
+  email?: string
+  address?: string
+  createdAt: string
+  updatedAt: string
+  _count?: { items: number }
+  items?: Item[]
+}
+
+export interface Item {
+  id: string
+  barcode: string
+  customerId: string
+  itemType: string
+  weight: number | string
+  description?: string
+  pawnDate: string
+  status: ItemStatus
+  createdAt: string
+  updatedAt: string
+  customer?: { id: string; name: string; nic: string }
+  release?: Release
+  barcodeLogs?: BarcodeLog[]
+}
+
+export interface Release {
+  id: string
+  itemId: string
+  releasedById: string
+  releaseDate: string
+  notes?: string
+  createdAt: string
+  item?: Item
+  releasedBy?: { id: string; name: string }
+}
+
+export interface Audit {
+  id: string
+  createdAt: string
+  createdById: string
+  totalItemsAtTime: number
+  notes?: string
+  finalizedAt?: string | null
+  createdBy?: { id: string; name: string }
+  _count?: { auditItems: number }
+  auditItems?: AuditItem[]
+}
+
+export interface AuditItem {
+  id: string
+  auditId: string
+  barcode: string
+  status: AuditItemStatus
+  itemId?: string | null
+  item?: {
+    id: string
+    barcode: string
+    itemType: string
+    weight: number | string
+    customer?: { id: string; name: string }
+  } | null
+}
+
+export interface BarcodeLog {
+  id: string
+  itemId: string
+  scannedAt: string
+  scanType: ScanType
+  scannedBy?: { id: string; name: string } | null
+}
+
+export interface Summary {
+  inventory: { totalActive: number; totalReleased: number; totalItems: number }
+  customers: number
+  audits: number
+  lastAudit: { id: string; finalizedAt: string; totalItemsAtTime: number } | null
+  breakdownByType: { itemType: string; count: number; totalWeight: string | null }[]
+}
+
+export interface ApiResponse<T> {
+  success: boolean
+  message: string
+  data: T
+}
+
+export interface Paginated<T> {
+  items: T[]
+  pagination: { total: number; page: number; limit: number; totalPages: number }
+}
