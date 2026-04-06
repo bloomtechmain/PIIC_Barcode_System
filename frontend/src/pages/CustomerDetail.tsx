@@ -4,7 +4,6 @@ import { ArrowLeft, Package, Phone, Mail, MapPin, CreditCard, Calendar, Scale, C
 import { getCustomer } from '../api/customer.api'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
 import Badge from '../components/ui/Badge'
-import CustomerAvatar from '../components/ui/CustomerAvatar'
 import WeightBadge from '../components/ui/WeightBadge'
 
 const typeColor: Record<string, string> = {

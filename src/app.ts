@@ -2,6 +2,7 @@ import express from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
 import morgan from 'morgan'
+import path from 'path'
 
 import authRoutes from './routes/auth.routes'
 import customerRoutes from './routes/customer.routes'
@@ -36,6 +37,15 @@ app.use('/api/items', itemRoutes)
 app.use('/api/releases', releaseRoutes)
 app.use('/api/audits', auditRoutes)
 app.use('/api/reports', reportRoutes)
+
+// ─── Static Frontend (Production) ─────────────────────────────────────────────
+if (process.env.NODE_ENV === 'production') {
+  const frontendDist = path.join(__dirname, '..', 'frontend', 'dist')
+  app.use(express.static(frontendDist))
+  app.get('*', (_req, res) => {
+    res.sendFile(path.join(frontendDist, 'index.html'))
+  })
+}
 
 // ─── 404 ──────────────────────────────────────────────────────────────────────
 app.use((_req, res) => {
