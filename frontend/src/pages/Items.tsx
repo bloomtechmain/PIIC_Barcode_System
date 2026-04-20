@@ -159,6 +159,7 @@ export default function Items() {
                 <thead>
                   <tr className="bg-gradient-to-r from-navy-600 to-navy-500">
                     <th className="px-5 py-3.5 text-left text-xs font-semibold text-navy-100 uppercase tracking-wider">Customer</th>
+                    <th className="px-5 py-3.5 text-left text-xs font-semibold text-navy-100 uppercase tracking-wider">Ticket ID</th>
                     <th className="px-5 py-3.5 text-left text-xs font-semibold text-navy-100 uppercase tracking-wider">Type</th>
                     <th className="px-5 py-3.5 text-left text-xs font-semibold text-navy-100 uppercase tracking-wider">Weight</th>
                     <th className="px-5 py-3.5 text-left text-xs font-semibold text-navy-100 uppercase tracking-wider">Pawn Date</th>
@@ -197,6 +198,13 @@ export default function Items() {
                                 />
                               </button>
                             ) : <span className="text-gray-300">—</span>}
+                          </td>
+
+                          {/* Ticket ID */}
+                          <td className="px-5 py-4">
+                            <span className="font-mono text-[11px] text-gray-400 bg-gray-100 px-2 py-0.5 rounded tracking-tight">
+                              {item.barcode}
+                            </span>
                           </td>
 
                           {/* Type */}

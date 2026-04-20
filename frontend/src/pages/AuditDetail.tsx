@@ -532,6 +532,11 @@ export default function AuditDetail() {
                       )}
                     </div>
 
+                    {/* Ticket ID */}
+                    <span className="font-mono text-[11px] text-gray-400 bg-gray-100 px-2 py-0.5 rounded flex-shrink-0 tracking-tight hidden sm:inline">
+                      {ai.barcode}
+                    </span>
+
                     {/* Item type — show corrected value */}
                     <span className="text-sm capitalize flex-1 min-w-0 truncate">
                       {effectiveItemType
