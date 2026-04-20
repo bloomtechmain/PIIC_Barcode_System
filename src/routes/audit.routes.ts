@@ -22,4 +22,10 @@ router.post('/:id/scan', auditController.scan)
 // POST /api/audits/:id/finalize  — ADMIN only
 router.post('/:id/finalize', requireRole('ADMIN'), auditController.finalize)
 
+// PATCH /api/audits/:id/items/:itemId  — any authenticated user
+router.patch('/:id/items/:itemId', auditController.updateAuditItem)
+
+// POST /api/audits/:id/bulk-release  — ADMIN only
+router.post('/:id/bulk-release', requireRole('ADMIN'), auditController.bulkRelease)
+
 export default router

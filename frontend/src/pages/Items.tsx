@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
-import { Plus, Search, Package, CheckCircle, Calendar, Scale, Tag, ChevronDown, CreditCard, ExternalLink } from 'lucide-react'
+import { Plus, Search, Package, CheckCircle, Calendar, Scale, Tag, ChevronDown, CreditCard, ExternalLink, Upload } from 'lucide-react'
 import { getItems, createItem } from '../api/item.api'
 import { getCustomers } from '../api/customer.api'
 import { Item } from '../types'
@@ -11,6 +11,7 @@ import CustomerAvatar from '../components/ui/CustomerAvatar'
 import WeightBadge from '../components/ui/WeightBadge'
 import BarcodeDisplay from '../components/ui/BarcodeDisplay'
 import Drawer from '../components/ui/Drawer'
+import CSVImportModal from '../components/ui/CSVImportModal'
 
 const ITEM_TYPES = ['ring', 'chain', 'bracelet', 'earrings', 'necklace', 'bangle', 'pendant', 'other']
 
@@ -32,6 +33,7 @@ export default function Items() {
   const [barcodeSearch, setBarcodeSearch] = useState('')
   const [page, setPage]               = useState(1)
   const [showDrawer, setShowDrawer]   = useState(false)
+  const [showImport, setShowImport]   = useState(false)
   const [expandedItemId, setExpandedItemId] = useState<string | null>(null)
   const [createdItem, setCreatedItem] = useState<Item | null>(null)
   const [formError, setFormError]     = useState('')
@@ -105,11 +107,17 @@ export default function Items() {
             </p>
           )}
         </div>
-        <button className="btn-primary" onClick={openDrawer}>
-          <Plus size={16} />
-          <span className="hidden sm:inline">Pawn Item</span>
-          <span className="sm:hidden">Pawn</span>
-        </button>
+        <div className="flex gap-2">
+          <button className="btn-secondary gap-2" onClick={() => setShowImport(true)}>
+            <Upload size={15} />
+            <span className="hidden sm:inline">Import CSV</span>
+          </button>
+          <button className="btn-primary" onClick={openDrawer}>
+            <Plus size={16} />
+            <span className="hidden sm:inline">Pawn Item</span>
+            <span className="sm:hidden">Pawn</span>
+          </button>
+        </div>
       </div>
 
       {/* ── Filters ─────────────────────────────────────────────────── */}
@@ -150,7 +158,6 @@ export default function Items() {
                 {/* ── Header ── */}
                 <thead>
                   <tr className="bg-gradient-to-r from-navy-600 to-navy-500">
-                    <th className="px-5 py-3.5 text-left text-xs font-semibold text-navy-100 uppercase tracking-wider">Barcode</th>
                     <th className="px-5 py-3.5 text-left text-xs font-semibold text-navy-100 uppercase tracking-wider">Customer</th>
                     <th className="px-5 py-3.5 text-left text-xs font-semibold text-navy-100 uppercase tracking-wider">Type</th>
                     <th className="px-5 py-3.5 text-left text-xs font-semibold text-navy-100 uppercase tracking-wider">Weight</th>
@@ -170,13 +177,6 @@ export default function Items() {
                           onClick={() => navigate(`/items/${item.id}`)}
                           className={`group cursor-pointer transition-colors ${isExpanded ? 'bg-gradient-to-r from-navy-50 to-blue-50' : 'hover:bg-gradient-to-r hover:from-navy-50 hover:to-blue-50'}`}
                         >
-                          {/* Barcode */}
-                          <td className="px-5 py-4">
-                            <span className="inline-flex items-center gap-1.5 font-mono text-xs font-bold text-navy-700 bg-navy-50 group-hover:bg-white border border-navy-100 px-2.5 py-1 rounded-lg tracking-wider transition-colors">
-                              {item.barcode}
-                            </span>
-                          </td>
-
                           {/* Customer */}
                           <td className="px-5 py-4">
                             {item.customer ? (
@@ -288,6 +288,9 @@ export default function Items() {
           </>
         )}
       </div>
+
+      {/* ── CSV Import Modal ─────────────────────────────────────────── */}
+      <CSVImportModal open={showImport} onClose={() => setShowImport(false)} />
 
       {/* ── Pawn Item Drawer ─────────────────────────────────────────── */}
       <Drawer

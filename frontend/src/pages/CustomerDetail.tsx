@@ -196,7 +196,6 @@ export default function CustomerDetail() {
               <table className="w-full text-sm min-w-[480px]">
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-100">
-                    <th className="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Barcode</th>
                     <th className="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Type</th>
                     <th className="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Weight</th>
                     <th className="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Pawn Date</th>
@@ -209,12 +208,6 @@ export default function CustomerDetail() {
                     <tr key={item.id}
                       onClick={() => navigate(`/items/${item.id}`)}
                       className="group cursor-pointer hover:bg-gradient-to-r hover:from-navy-50 hover:to-blue-50 transition-colors">
-
-                      <td className="px-5 py-3.5">
-                        <span className="font-mono text-xs font-bold text-navy-700 bg-navy-50 group-hover:bg-white border border-navy-100 px-2 py-1 rounded-lg tracking-wider transition-colors">
-                          {item.barcode}
-                        </span>
-                      </td>
 
                       <td className="px-5 py-3.5">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold capitalize ${typeColor[item.itemType] ?? typeColor.other}`}>

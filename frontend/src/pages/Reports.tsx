@@ -223,7 +223,6 @@ export default function Reports() {
               <table className="w-full text-sm min-w-[560px]">
                 <thead>
                   <tr className="bg-gradient-to-r from-red-600 to-rose-500">
-                    <th className="px-5 py-3.5 text-left text-xs font-semibold text-red-100 uppercase tracking-wider">Barcode</th>
                     <th className="px-5 py-3.5 text-left text-xs font-semibold text-red-100 uppercase tracking-wider">Type</th>
                     <th className="px-5 py-3.5 text-left text-xs font-semibold text-red-100 uppercase tracking-wider">Weight</th>
                     <th className="px-5 py-3.5 text-left text-xs font-semibold text-red-100 uppercase tracking-wider">Customer</th>
@@ -233,13 +232,6 @@ export default function Reports() {
                 <tbody className="divide-y divide-red-50">
                   {missingData.missingItems.map(mi => (
                     <tr key={mi.id} className="hover:bg-red-50 transition-colors group">
-
-                      {/* Barcode */}
-                      <td className="px-5 py-4">
-                        <span className="inline-flex items-center font-mono text-xs font-bold text-red-700 bg-red-50 group-hover:bg-white border border-red-100 px-2.5 py-1 rounded-lg tracking-wider transition-colors">
-                          {mi.barcode}
-                        </span>
-                      </td>
 
                       {/* Type */}
                       <td className="px-5 py-4">

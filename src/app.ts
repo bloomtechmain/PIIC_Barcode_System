@@ -10,6 +10,7 @@ import itemRoutes from './routes/item.routes'
 import releaseRoutes from './routes/release.routes'
 import auditRoutes from './routes/audit.routes'
 import reportRoutes from './routes/report.routes'
+import importRoutes from './routes/import.routes'
 import { errorHandler } from './middleware/error'
 
 const app = express()
@@ -37,6 +38,7 @@ app.use('/api/items', itemRoutes)
 app.use('/api/releases', releaseRoutes)
 app.use('/api/audits', auditRoutes)
 app.use('/api/reports', reportRoutes)
+app.use('/api/import', importRoutes)
 
 // ─── Static Frontend (Production) ─────────────────────────────────────────────
 if (process.env.NODE_ENV === 'production') {

@@ -24,6 +24,19 @@ export interface Customer {
   items?: Item[]
 }
 
+export interface ItemCorrection {
+  id: string
+  itemId: string
+  auditId: string
+  auditItemId: string
+  field: string
+  oldValue: string
+  newValue: string
+  correctedAt: string
+  correctedBy: { id: string; name: string }
+  audit?: { id: string; createdAt: string }
+}
+
 export interface Item {
   id: string
   barcode: string
@@ -38,6 +51,7 @@ export interface Item {
   customer?: { id: string; name: string; nic: string }
   release?: Release
   barcodeLogs?: BarcodeLog[]
+  itemCorrections?: ItemCorrection[]
 }
 
 export interface Release {
@@ -69,13 +83,17 @@ export interface AuditItem {
   barcode: string
   status: AuditItemStatus
   itemId?: string | null
+  remarks?: string | null
   item?: {
     id: string
     barcode: string
     itemType: string
     weight: number | string
+    status: ItemStatus
     customer?: { id: string; name: string }
+    itemCorrections?: ItemCorrection[]
   } | null
+  corrections?: ItemCorrection[]
 }
 
 export interface BarcodeLog {

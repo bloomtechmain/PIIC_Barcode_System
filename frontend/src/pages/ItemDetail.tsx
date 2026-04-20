@@ -8,7 +8,6 @@ import { getItem } from '../api/item.api'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
 import Badge from '../components/ui/Badge'
 import BarcodeDisplay from '../components/ui/BarcodeDisplay'
-import BarcodeBreakdown from '../components/ui/BarcodeBreakdown'
 import CustomerAvatar from '../components/ui/CustomerAvatar'
 import WeightBadge from '../components/ui/WeightBadge'
 
@@ -196,12 +195,6 @@ export default function ItemDetail() {
             </div>
           )}
         </div>
-      </div>
-
-      {/* ── Barcode breakdown — full width ────────────────────────────── */}
-      <div className="card p-6">
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-5">Barcode Breakdown</p>
-        <BarcodeBreakdown barcode={item.barcode} customerName={item.customer?.name} />
       </div>
 
       {/* ── Scan history — full width ─────────────────────────────────── */}

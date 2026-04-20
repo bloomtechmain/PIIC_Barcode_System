@@ -15,16 +15,19 @@ export default function BarcodeDisplay({ value, showPrint = false, label, large 
   useEffect(() => {
     if (!svgRef.current) return
     JsBarcode(svgRef.current, value, {
-      format: 'CODE128',
-      width: large ? 2.5 : 2,
-      height: large ? 90 : 64,
-      displayValue: true,
-      fontSize: large ? 15 : 13,
-      fontOptions: 'bold',
-      margin: large ? 16 : 12,
-      background: '#ffffff',
-      lineColor: '#111827'
+      format:       'CODE128',
+      width:        1.0,
+      height:       48,
+      displayValue: false,
+      margin:       6,
+      background:   '#ffffff',
+      lineColor:    '#111827'
     })
+    // Override the fixed pixel width JsBarcode sets so the SVG scales
+    // to fit its container while the viewBox keeps proportions correct
+    svgRef.current.style.width   = '100%'
+    svgRef.current.style.height  = 'auto'
+    svgRef.current.style.display = 'block'
   }, [value, large])
 
   const handlePrint = () => {
@@ -58,16 +61,15 @@ export default function BarcodeDisplay({ value, showPrint = false, label, large 
   }
 
   return (
-    <div className="flex flex-col items-center">
-      <div className="bg-white border border-gray-200 rounded-xl p-4 inline-block">
+    <div className="flex flex-col items-center w-full">
+      <div className="bg-white border border-gray-200 rounded-xl p-3 w-full overflow-hidden">
         <svg ref={svgRef} />
         {label && (
-          <p className="text-center text-sm text-gray-500 mt-1 font-medium">{label}</p>
+          <p className="text-center text-xs text-gray-500 mt-1.5 font-medium truncate px-1">{label}</p>
         )}
       </div>
       {showPrint && (
-        <button onClick={handlePrint}
-          className="btn-secondary mt-3 text-sm">
+        <button onClick={handlePrint} className="btn-secondary mt-3 text-sm">
           <Printer size={14} /> Print Barcode
         </button>
       )}

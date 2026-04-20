@@ -1,17 +1,19 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
-import { Plus, Search, Users, Phone, Mail, ChevronRight, UserPlus } from 'lucide-react'
+import { Plus, Search, Users, Phone, Mail, ChevronRight, UserPlus, Upload } from 'lucide-react'
 import { getCustomers, createCustomer } from '../api/customer.api'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
 import CustomerAvatar from '../components/ui/CustomerAvatar'
 import Drawer from '../components/ui/Drawer'
+import CSVImportModal from '../components/ui/CSVImportModal'
 
 export default function Customers() {
   const navigate = useNavigate()
   const qc = useQueryClient()
   const [search, setSearch]       = useState('')
   const [showDrawer, setShowDrawer] = useState(false)
+  const [showImport, setShowImport] = useState(false)
   const [form, setForm]           = useState({ name: '', nic: '', phone: '', email: '', address: '' })
   const [formError, setFormError] = useState('')
 
@@ -62,11 +64,17 @@ export default function Customers() {
             {customers.length} registered customer{customers.length !== 1 ? 's' : ''}
           </p>
         </div>
-        <button className="btn-primary gap-2" onClick={openDrawer}>
-          <UserPlus size={16} />
-          <span className="hidden sm:inline">New Customer</span>
-          <span className="sm:hidden">New</span>
-        </button>
+        <div className="flex gap-2">
+          <button className="btn-secondary gap-2" onClick={() => setShowImport(true)}>
+            <Upload size={15} />
+            <span className="hidden sm:inline">Import CSV</span>
+          </button>
+          <button className="btn-primary gap-2" onClick={openDrawer}>
+            <UserPlus size={16} />
+            <span className="hidden sm:inline">New Customer</span>
+            <span className="sm:hidden">New</span>
+          </button>
+        </div>
       </div>
 
       {/* ── Search ──────────────────────────────────────────────────── */}
@@ -161,6 +169,9 @@ export default function Customers() {
           })}
         </div>
       )}
+
+      {/* ── CSV Import Modal ─────────────────────────────────────────── */}
+      <CSVImportModal open={showImport} onClose={() => setShowImport(false)} />
 
       {/* ── New Customer Drawer ──────────────────────────────────────── */}
       <Drawer

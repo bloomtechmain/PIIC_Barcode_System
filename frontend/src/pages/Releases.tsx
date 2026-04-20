@@ -108,7 +108,6 @@ export default function Releases() {
               {/* ── Header ── */}
               <thead>
                 <tr className="bg-gradient-to-r from-navy-600 to-navy-500">
-                  <th className="px-5 py-3.5 text-left text-xs font-semibold text-navy-100 uppercase tracking-wider">Barcode</th>
                   <th className="px-5 py-3.5 text-left text-xs font-semibold text-navy-100 uppercase tracking-wider">Customer</th>
                   <th className="px-5 py-3.5 text-left text-xs font-semibold text-navy-100 uppercase tracking-wider">Type</th>
                   <th className="px-5 py-3.5 text-left text-xs font-semibold text-navy-100 uppercase tracking-wider">Released By</th>
@@ -121,13 +120,6 @@ export default function Releases() {
               <tbody className="divide-y divide-gray-100">
                 {releases.map(r => (
                   <tr key={r.id} className="group hover:bg-gradient-to-r hover:from-navy-50 hover:to-blue-50 transition-colors">
-
-                    {/* Barcode */}
-                    <td className="px-5 py-4">
-                      <span className="inline-flex items-center font-mono text-xs font-bold text-navy-700 bg-navy-50 group-hover:bg-white border border-navy-100 px-2.5 py-1 rounded-lg tracking-wider transition-colors">
-                        {r.item?.barcode ?? '—'}
-                      </span>
-                    </td>
 
                     {/* Customer */}
                     <td className="px-5 py-4">
@@ -215,10 +207,6 @@ export default function Releases() {
                   </div>
                 </div>
               )}
-              <div className="px-4 py-3">
-                <p className="text-xs text-emerald-500 mb-0.5">Barcode</p>
-                <p className="font-mono font-bold text-emerald-800 tracking-wider">{released.barcode}</p>
-              </div>
               <div className="grid grid-cols-2">
                 <div className="px-4 py-3">
                   <p className="text-xs text-emerald-500">Type</p>
@@ -279,9 +267,8 @@ export default function Releases() {
                     <Tag size={15} className="text-white" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-mono text-xs font-bold text-navy-700 truncate">{selectedItem.barcode}</p>
                     {selectedItem.customer && (
-                      <p className="text-xs text-gray-500 truncate">{selectedItem.customer.name}</p>
+                      <p className="text-sm font-semibold text-navy-700 truncate">{selectedItem.customer.name}</p>
                     )}
                   </div>
                   <WeightBadge weight={selectedItem.weight} size="sm" />
@@ -312,10 +299,7 @@ export default function Releases() {
                         <Tag size={13} className={form.itemId === item.id ? 'text-white' : 'text-navy-600'} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className={`font-mono text-xs font-bold truncate ${form.itemId === item.id ? 'text-white' : 'text-navy-700'}`}>
-                          {item.barcode}
-                        </p>
-                        <p className={`text-xs truncate capitalize ${form.itemId === item.id ? 'text-white/70' : 'text-gray-400'}`}>
+                        <p className={`text-xs font-semibold truncate capitalize ${form.itemId === item.id ? 'text-white' : 'text-navy-700'}`}>
                           {item.itemType}{item.customer ? ` · ${item.customer.name}` : ''}
                         </p>
                       </div>

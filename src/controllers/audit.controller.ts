@@ -1,6 +1,6 @@
 import { Request, Response } from 'express'
 import * as auditService from '../services/audit.service'
-import { createAuditSchema, scanBarcodeSchema } from '../validators/audit.validator'
+import { createAuditSchema, scanBarcodeSchema, updateAuditItemSchema, bulkReleaseSchema } from '../validators/audit.validator'
 import { sendSuccess, sendCreated } from '../utils/response'
 import { asyncHandler } from '../utils/async-handler'
 
@@ -29,4 +29,21 @@ export const scan = asyncHandler(async (req: Request, res: Response) => {
 export const finalize = asyncHandler(async (req: Request, res: Response) => {
   const result = await auditService.finalizeAudit(req.params.id)
   sendSuccess(res, result, 'Audit finalized')
+})
+
+export const updateAuditItem = asyncHandler(async (req: Request, res: Response) => {
+  const body = updateAuditItemSchema.parse(req.body)
+  const result = await auditService.updateAuditItem(
+    req.params.id,
+    req.params.itemId,
+    body,
+    req.user!.userId
+  )
+  sendSuccess(res, result, 'Audit item updated')
+})
+
+export const bulkRelease = asyncHandler(async (req: Request, res: Response) => {
+  const body = bulkReleaseSchema.parse(req.body)
+  const result = await auditService.bulkRelease(req.params.id, body, req.user!.userId)
+  sendCreated(res, result, `${result.released} item(s) released successfully`)
 })

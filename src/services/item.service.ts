@@ -76,19 +76,16 @@ export const create = async (data: CreateItemInput, createdById: string) => {
     let barcode = data.barcode
 
     if (!barcode) {
+      // Verify customer exists
       const customer = await tx.customer.findUnique({
         where: { id: data.customerId },
-        select: { name: true }
+        select: { id: true }
       })
       if (!customer) throw new AppError('Customer not found', 404)
 
-      // Count ALL items for this customer (ACTIVE + RELEASED) — gives true pawn number
-      const existingCount = await tx.item.count({
-        where: { customerId: data.customerId }
-      })
-
-      // Next pawn number = existing + 1
-      barcode = generateBarcode(customer.name, existingCount + 1)
+      // Generate a unique random barcode (retry on the extremely rare collision)
+      do { barcode = generateBarcode() }
+      while (await tx.item.findUnique({ where: { barcode } }))
     }
 
     const item = await tx.item.create({

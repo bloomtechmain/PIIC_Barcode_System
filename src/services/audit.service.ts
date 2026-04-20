@@ -1,7 +1,7 @@
 import { AuditItemStatus, ItemStatus, ScanType } from '@prisma/client'
 import { prisma } from '../lib/prisma'
 import { AppError } from '../middleware/error'
-import { CreateAuditInput } from '../validators/audit.validator'
+import { CreateAuditInput, UpdateAuditItemInput, BulkReleaseInput } from '../validators/audit.validator'
 
 export const create = async (data: CreateAuditInput, createdById: string) => {
   const totalItemsAtTime = await prisma.item.count({
@@ -145,8 +145,18 @@ export const findById = async (id: string) => {
               barcode: true,
               itemType: true,
               weight: true,
-              customer: { select: { id: true, name: true } }
+              status: true,
+              customer: { select: { id: true, name: true } },
+              itemCorrections: {
+                orderBy: { correctedAt: 'desc' },
+                include: { correctedBy: { select: { id: true, name: true } },
+                            audit: { select: { id: true, createdAt: true } } }
+              }
             }
+          },
+          corrections: {
+            orderBy: { correctedAt: 'asc' },
+            include: { correctedBy: { select: { id: true, name: true } } }
           }
         }
       }
@@ -154,4 +164,104 @@ export const findById = async (id: string) => {
   })
   if (!audit) throw new AppError('Audit not found', 404)
   return audit
+}
+
+export const updateAuditItem = async (
+  auditId: string,
+  auditItemId: string,
+  data: UpdateAuditItemInput,
+  userId: string
+) => {
+  const auditItem = await prisma.auditItem.findUnique({
+    where: { id: auditItemId },
+    include: { item: true }
+  })
+  if (!auditItem) throw new AppError('Audit item not found', 404)
+  if (auditItem.auditId !== auditId) throw new AppError('Audit item does not belong to this audit', 400)
+
+  return prisma.$transaction(async tx => {
+    // Save remarks
+    const updated = await tx.auditItem.update({
+      where: { id: auditItemId },
+      data: { remarks: data.remarks ?? auditItem.remarks }
+    })
+
+    // Apply corrections if item exists
+    if (data.corrections?.length && auditItem.item) {
+      const item = auditItem.item
+      const updateData: Record<string, string> = {}
+
+      for (const c of data.corrections) {
+        const oldValue = String(item[c.field as keyof typeof item] ?? '')
+        await tx.itemCorrection.create({
+          data: {
+            itemId: item.id,
+            auditId,
+            auditItemId,
+            field: c.field,
+            oldValue,
+            newValue: c.newValue,
+            correctedById: userId
+          }
+        })
+        updateData[c.field] = c.newValue
+      }
+
+      await tx.item.update({ where: { id: item.id }, data: updateData })
+    }
+
+    return updated
+  })
+}
+
+export const bulkRelease = async (
+  auditId: string,
+  data: BulkReleaseInput,
+  releasedById: string
+) => {
+  const audit = await prisma.audit.findUnique({ where: { id: auditId } })
+  if (!audit) throw new AppError('Audit not found', 404)
+  if (!audit.finalizedAt) throw new AppError('Audit must be finalized before releasing items', 400)
+
+  // Load all requested items in one query
+  const items = await prisma.item.findMany({
+    where: { id: { in: data.itemIds } },
+    include: { customer: { select: { id: true, name: true, nic: true } } }
+  })
+
+  const itemMap = new Map(items.map(i => [i.id, i]))
+  const skipped: string[] = []
+  const toRelease = data.itemIds.filter(id => {
+    const item = itemMap.get(id)
+    if (!item || item.status === ItemStatus.RELEASED) {
+      skipped.push(id)
+      return false
+    }
+    return true
+  })
+
+  if (!toRelease.length) throw new AppError('All selected items are already released', 409)
+
+  const released = await prisma.$transaction(async tx => {
+    const results = []
+    for (const itemId of toRelease) {
+      const release = await tx.release.create({
+        data: { itemId, releasedById, notes: data.notes },
+        include: {
+          item: {
+            include: { customer: { select: { id: true, name: true, nic: true } } }
+          },
+          releasedBy: { select: { id: true, name: true } }
+        }
+      })
+      await tx.item.update({
+        where: { id: itemId },
+        data: { status: ItemStatus.RELEASED }
+      })
+      results.push(release)
+    }
+    return results
+  })
+
+  return { released: released.length, skipped: skipped.length, releases: released }
 }

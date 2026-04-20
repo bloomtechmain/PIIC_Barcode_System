@@ -42,9 +42,10 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  releases    Release[]
-  audits      Audit[]
-  barcodeLogs BarcodeLog[]
+  releases        Release[]
+  audits          Audit[]
+  barcodeLogs     BarcodeLog[]
+  itemCorrections ItemCorrection[]
 
   @@map("users")
 }
@@ -77,10 +78,11 @@ model Item {
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
-  customer    Customer    @relation(fields: [customerId], references: [id])
-  release     Release?
-  auditItems  AuditItem[]
-  barcodeLogs BarcodeLog[]
+  customer        Customer         @relation(fields: [customerId], references: [id])
+  release         Release?
+  auditItems      AuditItem[]
+  barcodeLogs     BarcodeLog[]
+  itemCorrections ItemCorrection[]
 
   @@index([barcode])
   @@index([customerId])
@@ -113,8 +115,9 @@ model Audit {
   notes            String?
   finalizedAt      DateTime? // NULL = audit still in progress
 
-  createdBy  User        @relation(fields: [createdById], references: [id])
-  auditItems AuditItem[]
+  createdBy      User             @relation(fields: [createdById], references: [id])
+  auditItems     AuditItem[]
+  itemCorrections ItemCorrection[]
 
   @@map("audits")
 }
@@ -125,9 +128,11 @@ model AuditItem {
   barcode String
   status  AuditItemStatus
   itemId  String?
+  remarks String?
 
-  audit Audit @relation(fields: [auditId], references: [id])
-  item  Item? @relation(fields: [itemId], references: [id])
+  audit       Audit            @relation(fields: [auditId], references: [id])
+  item        Item?            @relation(fields: [itemId], references: [id])
+  corrections ItemCorrection[]
 
   @@unique([auditId, barcode]) // prevent duplicate scans in same audit
   @@index([auditId])
@@ -135,6 +140,28 @@ model AuditItem {
   @@index([itemId])
   @@index([auditId, status])
   @@map("audit_items")
+}
+
+model ItemCorrection {
+  id            String   @id @default(cuid())
+  itemId        String
+  auditId       String
+  auditItemId   String
+  field         String   // "weight" | "itemType" | "description"
+  oldValue      String
+  newValue      String
+  correctedById String
+  correctedAt   DateTime @default(now())
+
+  item        Item      @relation(fields: [itemId], references: [id])
+  audit       Audit     @relation(fields: [auditId], references: [id])
+  auditItem   AuditItem @relation(fields: [auditItemId], references: [id])
+  correctedBy User      @relation(fields: [correctedById], references: [id])
+
+  @@index([itemId])
+  @@index([auditId])
+  @@index([auditItemId])
+  @@map("item_corrections")
 }
 
 model BarcodeLog {
