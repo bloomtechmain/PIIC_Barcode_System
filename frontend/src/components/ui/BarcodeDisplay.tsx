@@ -33,28 +33,25 @@ export default function BarcodeDisplay({ value, showPrint = false, label, large 
     const svg = svgRef.current
     if (!svg) return
 
-    // Re-render a fresh SVG at higher resolution for print
-    const printSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
-    JsBarcode(printSvg, value, {
-      format:       'CODE128',
-      width:        2.2,
-      height:       70,
-      displayValue: false,
-      margin:       4,
-      background:   '#ffffff',
-      lineColor:    '#000000'
-    })
-    const svgData = new XMLSerializer().serializeToString(printSvg)
+    // Clone the live, already-rendered SVG so it's guaranteed to be valid
+    const clone = svg.cloneNode(true) as SVGSVGElement
+    clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
+    clone.style.cssText = 'width:100%;height:auto;display:block;'
+    const svgData = new XMLSerializer().serializeToString(clone)
 
     const displayTicket = ticketNo ?? value
 
-    const win = window.open('', '_blank', 'width=320,height=400')
-    if (!win) return
+    // Hidden iframe avoids popup-blocker issues
+    const iframe = document.createElement('iframe')
+    iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:1px;height:1px;border:0;'
+    document.body.appendChild(iframe)
 
-    win.document.write(`<!DOCTYPE html>
+    const doc = iframe.contentDocument!
+    doc.open()
+    doc.write(`<!DOCTYPE html>
 <html>
   <head>
-    <meta charset="utf-8" />
+    <meta charset="utf-8"/>
     <title>Barcode Label</title>
     <style>
       @page {
@@ -79,13 +76,6 @@ export default function BarcodeDisplay({ value, showPrint = false, label, large 
         height: auto !important;
         display: block;
       }
-      .ticket-no {
-        font-size: 13pt;
-        font-weight: 700;
-        text-align: center;
-        letter-spacing: 0.5px;
-        margin-bottom: 1.5mm;
-      }
       .ticket-label {
         font-size: 7pt;
         font-weight: 600;
@@ -93,6 +83,13 @@ export default function BarcodeDisplay({ value, showPrint = false, label, large 
         letter-spacing: 1px;
         color: #555;
         margin-bottom: 0.5mm;
+      }
+      .ticket-no {
+        font-size: 13pt;
+        font-weight: 700;
+        text-align: center;
+        letter-spacing: 0.5px;
+        margin-bottom: 1.5mm;
       }
       .item-label {
         font-size: 9pt;
@@ -107,15 +104,16 @@ export default function BarcodeDisplay({ value, showPrint = false, label, large 
     <p class="ticket-label">Ticket No</p>
     <p class="ticket-no">${displayTicket}</p>
     ${label ? `<p class="item-label">${label}</p>` : ''}
-    <script>
-      window.onload = function() {
-        window.print();
-        window.close();
-      };
-    <\/script>
   </body>
 </html>`)
-    win.document.close()
+    doc.close()
+
+    // Wait for iframe content to paint, then print
+    setTimeout(() => {
+      iframe.contentWindow?.focus()
+      iframe.contentWindow?.print()
+      setTimeout(() => document.body.removeChild(iframe), 1000)
+    }, 400)
   }
 
   return (
