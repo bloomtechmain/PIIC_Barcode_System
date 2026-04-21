@@ -63,60 +63,43 @@ export default function BarcodeDisplay({ value, showPrint = false, label, large 
     * { margin:0; padding:0; box-sizing:border-box; }
     body {
       font-family:'Courier New',Courier,monospace;
-      background:#f0f0f0;
+      background:#fff;
       display:flex; flex-direction:column;
       align-items:center; justify-content:center;
-      min-height:100vh; gap:12px;
+      padding:6mm;
     }
-    .card {
-      background:#fff; border:1px solid #ddd;
-      border-radius:10px; padding:20px;
-      display:flex; flex-direction:column;
-      align-items:center; width:360px;
-      box-shadow:0 2px 8px rgba(0,0,0,0.1);
-    }
-    .barcode { width:100%; margin-bottom:12px; }
+    .barcode { width:100%; margin-bottom:10px; }
     .barcode svg { width:100% !important; height:auto !important; display:block; }
     .ticket-lbl { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:#888; margin-bottom:3px; }
-    .ticket-no  { font-size:24px; font-weight:700; letter-spacing:0.5px; margin-bottom:6px; }
-    .item-lbl   { font-size:13px; color:#555; margin-bottom:14px; }
-    .btn {
-      background:#1b1464; color:#fff; border:none;
-      padding:10px 28px; border-radius:7px;
-      font-size:14px; font-weight:600; cursor:pointer;
-      display:flex; align-items:center; gap:6px;
-    }
-    .btn:hover { background:#2a2480; }
-    .hint { font-size:10px; color:#999; font-family:sans-serif; }
-
-    @media print {
-      @page { size: portrait; margin: 0; }
-      body { background:#fff; padding:0; justify-content:flex-start; min-height:unset; gap:0; }
-      .card { border:none; box-shadow:none; border-radius:0; padding:6mm; width:100%; }
-      .btn, .hint { display:none; }
-    }
+    .ticket-no  { font-size:22px; font-weight:700; letter-spacing:0.5px; margin-bottom:4px; }
+    .item-lbl   { font-size:12px; color:#555; }
   </style>
 </head>
 <body>
-  <div class="card">
-    <div class="barcode">${svgHTML}</div>
-    <p class="ticket-lbl">Ticket No</p>
-    <p class="ticket-no">${displayTicket}</p>
-    ${label ? `<p class="item-lbl">${label}</p>` : ''}
-    <button class="btn" onclick="window.print()">🖨️ Print</button>
-  </div>
-  <p class="hint">Select your thermal printer, then click Print.</p>
+  <div class="barcode">${svgHTML}</div>
+  <p class="ticket-lbl">Ticket No</p>
+  <p class="ticket-no">${displayTicket}</p>
+  ${label ? `<p class="item-lbl">${label}</p>` : ''}
 </body>
 </html>`
 
-    const win = window.open('', '_blank', 'width=440,height=640,toolbar=0,location=0,menubar=0,scrollbars=0')
-    if (!win) {
-      alert('Please allow popups for this site to enable printing.')
-      return
+    // Use a hidden iframe to avoid popup blockers
+    const iframe = document.createElement('iframe')
+    iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:0;height:0;border:0;'
+    document.body.appendChild(iframe)
+
+    const doc = iframe.contentDocument ?? iframe.contentWindow?.document
+    if (!doc) { document.body.removeChild(iframe); return }
+
+    doc.open()
+    doc.write(html)
+    doc.close()
+
+    iframe.onload = () => {
+      iframe.contentWindow?.focus()
+      iframe.contentWindow?.print()
+      setTimeout(() => document.body.removeChild(iframe), 1000)
     }
-    win.document.write(html)
-    win.document.close()
-    win.focus()
   }
 
   return (
