@@ -17,7 +17,7 @@ import { errorHandler } from './middleware/error'
 const app = express()
 
 // ─── Security & Parsing ───────────────────────────────────────────────────────
-app.use(helmet())
+app.use(helmet({ contentSecurityPolicy: false }))
 app.use(cors())
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))

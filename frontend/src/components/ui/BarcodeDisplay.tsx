@@ -30,10 +30,10 @@ export default function BarcodeDisplay({ value, showPrint = false, label, large 
   }, [value, large])
 
   const handlePrint = () => {
-    // Render high-quality barcode for print
+    // Render high-quality barcode SVG
+    const tempSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
     const tempContainer = document.createElement('div')
     tempContainer.style.cssText = 'position:absolute;left:-9999px;top:0;width:300px;'
-    const tempSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
     tempContainer.appendChild(tempSvg)
     document.body.appendChild(tempContainer)
 
@@ -54,52 +54,37 @@ export default function BarcodeDisplay({ value, showPrint = false, label, large 
 
     const displayTicket = ticketNo ?? value
 
-    const html = `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8"/>
-  <title>Print Label</title>
-  <style>
-    * { margin:0; padding:0; box-sizing:border-box; }
-    body {
-      font-family:'Courier New',Courier,monospace;
-      background:#fff;
-      display:flex; flex-direction:column;
-      align-items:center; justify-content:center;
-      padding:6mm;
+    // Inject a print-only overlay into the current page — no popup/iframe needed
+    const printArea = document.createElement('div')
+    printArea.id = '__barcode_print__'
+    printArea.innerHTML = `
+      <div style="font-family:'Courier New',Courier,monospace;display:flex;flex-direction:column;align-items:center;padding:6mm;">
+        <div style="width:100%;margin-bottom:10px;">${svgHTML}</div>
+        <p style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#888;margin-bottom:3px;">Ticket No</p>
+        <p style="font-size:22px;font-weight:700;letter-spacing:0.5px;margin-bottom:4px;">${displayTicket}</p>
+        ${label ? `<p style="font-size:12px;color:#555;">${label}</p>` : ''}
+      </div>`
+
+    const style = document.createElement('style')
+    style.id = '__barcode_print_style__'
+    style.textContent = `
+      @media print {
+        body > *:not(#__barcode_print__) { display: none !important; }
+        #__barcode_print__ { display: block !important; }
+      }
+      #__barcode_print__ { display: none; }`
+
+    document.head.appendChild(style)
+    document.body.appendChild(printArea)
+
+    const cleanup = () => {
+      document.head.removeChild(style)
+      document.body.removeChild(printArea)
+      window.removeEventListener('afterprint', cleanup)
     }
-    .barcode { width:100%; margin-bottom:10px; }
-    .barcode svg { width:100% !important; height:auto !important; display:block; }
-    .ticket-lbl { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:#888; margin-bottom:3px; }
-    .ticket-no  { font-size:22px; font-weight:700; letter-spacing:0.5px; margin-bottom:4px; }
-    .item-lbl   { font-size:12px; color:#555; }
-  </style>
-</head>
-<body>
-  <div class="barcode">${svgHTML}</div>
-  <p class="ticket-lbl">Ticket No</p>
-  <p class="ticket-no">${displayTicket}</p>
-  ${label ? `<p class="item-lbl">${label}</p>` : ''}
-</body>
-</html>`
+    window.addEventListener('afterprint', cleanup)
 
-    // Use a hidden iframe to avoid popup blockers
-    const iframe = document.createElement('iframe')
-    iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:0;height:0;border:0;'
-    document.body.appendChild(iframe)
-
-    const doc = iframe.contentDocument ?? iframe.contentWindow?.document
-    if (!doc) { document.body.removeChild(iframe); return }
-
-    doc.open()
-    doc.write(html)
-    doc.close()
-
-    iframe.onload = () => {
-      iframe.contentWindow?.focus()
-      iframe.contentWindow?.print()
-      setTimeout(() => document.body.removeChild(iframe), 1000)
-    }
+    window.print()
   }
 
   return (
