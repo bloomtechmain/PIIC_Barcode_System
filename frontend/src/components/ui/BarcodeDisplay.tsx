@@ -58,17 +58,19 @@ export default function BarcodeDisplay({ value, showPrint = false, label, large 
     styleEl.id = '__thermal_print_style__'
     styleEl.textContent = `
       @media print {
-        @page { size: 80mm auto; margin: 3mm; }
+        @page { margin: 0; }
+        html, body { margin: 0; padding: 0; background: #fff; }
         body > *:not(#__thermal_label__) { display: none !important; visibility: hidden !important; }
         #__thermal_label__ {
           display: flex !important;
           visibility: visible !important;
           flex-direction: column;
           align-items: center;
-          width: 74mm;
+          width: 100%;
           position: fixed;
           top: 0; left: 0;
           background: #fff;
+          padding: 3mm;
           font-family: 'Courier New', Courier, monospace;
         }
         #__thermal_label__ .t-barcode { width: 100%; margin-bottom: 2mm; }
