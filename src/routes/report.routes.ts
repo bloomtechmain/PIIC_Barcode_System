@@ -5,7 +5,7 @@ import { requireRole } from '../middleware/role'
 
 const router = Router()
 
-router.use(authenticate, requireRole('ADMIN'))
+router.use(authenticate, requireRole('ADMIN', 'SUPER_ADMIN'))
 
 // GET /api/reports/summary
 router.get('/summary', reportController.getSummary)

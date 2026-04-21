@@ -9,7 +9,7 @@ const router = Router()
 router.post('/login', authController.login)
 
 // POST /api/auth/register  — ADMIN only
-router.post('/register', authenticate, requireRole('ADMIN'), authController.register)
+router.post('/register', authenticate, requireRole('ADMIN', 'SUPER_ADMIN'), authController.register)
 
 // GET /api/auth/me
 router.get('/me', authenticate, authController.getProfile)

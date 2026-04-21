@@ -14,18 +14,18 @@ router.get('/', auditController.getAll)
 router.get('/:id', auditController.getById)
 
 // POST /api/audits  — ADMIN only
-router.post('/', requireRole('ADMIN'), auditController.create)
+router.post('/', requireRole('ADMIN', 'SUPER_ADMIN'), auditController.create)
 
 // POST /api/audits/:id/scan  — any authenticated user
 router.post('/:id/scan', auditController.scan)
 
 // POST /api/audits/:id/finalize  — ADMIN only
-router.post('/:id/finalize', requireRole('ADMIN'), auditController.finalize)
+router.post('/:id/finalize', requireRole('ADMIN', 'SUPER_ADMIN'), auditController.finalize)
 
 // PATCH /api/audits/:id/items/:itemId  — any authenticated user
 router.patch('/:id/items/:itemId', auditController.updateAuditItem)
 
 // POST /api/audits/:id/bulk-release  — ADMIN only
-router.post('/:id/bulk-release', requireRole('ADMIN'), auditController.bulkRelease)
+router.post('/:id/bulk-release', requireRole('ADMIN', 'SUPER_ADMIN'), auditController.bulkRelease)
 
 export default router
