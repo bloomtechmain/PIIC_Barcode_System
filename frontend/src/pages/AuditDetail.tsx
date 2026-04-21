@@ -423,6 +423,7 @@ export default function AuditDetail() {
             className="flex gap-2">
             <input
               ref={inputRef}
+              autoFocus
               className="input flex-1 font-mono text-lg py-3 tracking-widest"
               placeholder="Scan or type barcode, press Enter…"
               value={barcode}
