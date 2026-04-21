@@ -39,10 +39,10 @@ export default function BarcodeDisplay({ value, showPrint = false, label, large 
 
     JsBarcode(tempSvg, value, {
       format:       'CODE128',
-      width:        3.5,
-      height:       160,
+      width:        5,
+      height:       220,
       displayValue: false,
-      margin:       6,
+      margin:       8,
       background:   '#ffffff',
       lineColor:    '#000000'
     })
@@ -69,6 +69,12 @@ export default function BarcodeDisplay({ value, showPrint = false, label, large 
     style.id = '__barcode_print_style__'
     style.textContent = `
       @media print {
+        @page { margin: 0; }
+        html, body {
+          height: auto !important;
+          min-height: 0 !important;
+          overflow: visible !important;
+        }
         body > *:not(#__barcode_print__) { display: none !important; }
         #__barcode_print__ { display: block !important; }
       }
