@@ -30,7 +30,7 @@ export default function BarcodeDisplay({ value, showPrint = false, label, large 
   }, [value, large])
 
   const handlePrint = () => {
-    // Render a high-quality barcode in an off-screen container
+    // Render high-quality barcode for print
     const tempContainer = document.createElement('div')
     tempContainer.style.cssText = 'position:absolute;left:-9999px;top:0;width:300px;'
     const tempSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
@@ -54,53 +54,69 @@ export default function BarcodeDisplay({ value, showPrint = false, label, large 
 
     const displayTicket = ticketNo ?? value
 
-    // Build the label element (hidden until beforeprint fires)
-    const labelEl = document.createElement('div')
-    labelEl.id   = '__thermal_label__'
-    labelEl.style.cssText = 'display:none;'
-    labelEl.innerHTML = `
-      <div style="width:100%;margin-bottom:3mm;">${svgHTML}</div>
-      <p style="font-size:7pt;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:#555;margin:0 0 1mm 0;">Ticket No</p>
-      <p style="font-size:13pt;font-weight:700;margin:0 0 2mm 0;letter-spacing:0.5px;">${displayTicket}</p>
-      ${label ? `<p style="font-size:9pt;color:#333;margin:0;">${label}</p>` : ''}
-    `
-    document.body.appendChild(labelEl)
-
-    // @page style — no size declaration, just zero margin
-    const pageStyle = document.createElement('style')
-    pageStyle.textContent = '@page { margin: 0; }'
-    document.head.appendChild(pageStyle)
-
-    const appRoot = document.getElementById('root')
-
-    // beforeprint: show label, hide app — fires right before Chrome renders print preview
-    const onBefore = () => {
-      labelEl.style.cssText = [
-        'display:flex',
-        'flex-direction:column',
-        'align-items:center',
-        'width:100%',
-        'padding:4mm',
-        'background:#fff',
-        'font-family:"Courier New",Courier,monospace',
-        'box-sizing:border-box',
-      ].join(';')
-      if (appRoot) appRoot.style.display = 'none'
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Print Label</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family:'Courier New',Courier,monospace;
+      background:#f0f0f0;
+      display:flex; flex-direction:column;
+      align-items:center; justify-content:center;
+      min-height:100vh; gap:12px;
     }
-
-    // afterprint: restore everything
-    const onAfter = () => {
-      document.body.removeChild(labelEl)
-      document.head.removeChild(pageStyle)
-      if (appRoot) appRoot.style.display = ''
-      window.removeEventListener('beforeprint', onBefore)
-      window.removeEventListener('afterprint',  onAfter)
+    .card {
+      background:#fff; border:1px solid #ddd;
+      border-radius:10px; padding:16px;
+      display:flex; flex-direction:column;
+      align-items:center; width:280px;
+      box-shadow:0 2px 8px rgba(0,0,0,0.1);
     }
+    .barcode { width:100%; margin-bottom:8px; }
+    .barcode svg { width:100% !important; height:auto !important; display:block; }
+    .ticket-lbl { font-size:8px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:#888; margin-bottom:2px; }
+    .ticket-no  { font-size:18px; font-weight:700; letter-spacing:0.5px; margin-bottom:4px; }
+    .item-lbl   { font-size:11px; color:#555; margin-bottom:10px; }
+    .btn {
+      background:#1b1464; color:#fff; border:none;
+      padding:10px 28px; border-radius:7px;
+      font-size:14px; font-weight:600; cursor:pointer;
+      display:flex; align-items:center; gap:6px;
+    }
+    .btn:hover { background:#2a2480; }
+    .hint { font-size:10px; color:#999; font-family:sans-serif; }
 
-    window.addEventListener('beforeprint', onBefore)
-    window.addEventListener('afterprint',  onAfter)
+    @media print {
+      @page { margin: 0; }
+      body { background:#fff; padding:0; justify-content:flex-start; min-height:unset; gap:0; }
+      .card { border:none; box-shadow:none; border-radius:0; padding:4mm; width:100%; }
+      .btn, .hint { display:none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="barcode">${svgHTML}</div>
+    <p class="ticket-lbl">Ticket No</p>
+    <p class="ticket-no">${displayTicket}</p>
+    ${label ? `<p class="item-lbl">${label}</p>` : ''}
+    <button class="btn" onclick="window.print()">🖨️ Print</button>
+  </div>
+  <p class="hint">Select your thermal printer, then click Print.</p>
+</body>
+</html>`
 
-    window.print()
+    const win = window.open('', '_blank', 'width=360,height=520,toolbar=0,location=0,menubar=0,scrollbars=0')
+    if (!win) {
+      alert('Please allow popups for this site to enable printing.')
+      return
+    }
+    win.document.write(html)
+    win.document.close()
+    win.focus()
   }
 
   return (
