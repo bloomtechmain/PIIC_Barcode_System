@@ -39,10 +39,10 @@ export default function BarcodeDisplay({ value, showPrint = false, label, large 
 
     JsBarcode(tempSvg, value, {
       format:       'CODE128',
-      width:        2.5,
-      height:       72,
+      width:        3.5,
+      height:       160,
       displayValue: false,
-      margin:       4,
+      margin:       6,
       background:   '#ffffff',
       lineColor:    '#000000'
     })
@@ -70,16 +70,16 @@ export default function BarcodeDisplay({ value, showPrint = false, label, large 
     }
     .card {
       background:#fff; border:1px solid #ddd;
-      border-radius:10px; padding:16px;
+      border-radius:10px; padding:20px;
       display:flex; flex-direction:column;
-      align-items:center; width:280px;
+      align-items:center; width:360px;
       box-shadow:0 2px 8px rgba(0,0,0,0.1);
     }
-    .barcode { width:100%; margin-bottom:8px; }
+    .barcode { width:100%; margin-bottom:12px; }
     .barcode svg { width:100% !important; height:auto !important; display:block; }
-    .ticket-lbl { font-size:8px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:#888; margin-bottom:2px; }
-    .ticket-no  { font-size:18px; font-weight:700; letter-spacing:0.5px; margin-bottom:4px; }
-    .item-lbl   { font-size:11px; color:#555; margin-bottom:10px; }
+    .ticket-lbl { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:#888; margin-bottom:3px; }
+    .ticket-no  { font-size:24px; font-weight:700; letter-spacing:0.5px; margin-bottom:6px; }
+    .item-lbl   { font-size:13px; color:#555; margin-bottom:14px; }
     .btn {
       background:#1b1464; color:#fff; border:none;
       padding:10px 28px; border-radius:7px;
@@ -90,9 +90,9 @@ export default function BarcodeDisplay({ value, showPrint = false, label, large 
     .hint { font-size:10px; color:#999; font-family:sans-serif; }
 
     @media print {
-      @page { margin: 0; }
+      @page { size: portrait; margin: 0; }
       body { background:#fff; padding:0; justify-content:flex-start; min-height:unset; gap:0; }
-      .card { border:none; box-shadow:none; border-radius:0; padding:4mm; width:100%; }
+      .card { border:none; box-shadow:none; border-radius:0; padding:6mm; width:100%; }
       .btn, .hint { display:none; }
     }
   </style>
@@ -109,7 +109,7 @@ export default function BarcodeDisplay({ value, showPrint = false, label, large 
 </body>
 </html>`
 
-    const win = window.open('', '_blank', 'width=360,height=520,toolbar=0,location=0,menubar=0,scrollbars=0')
+    const win = window.open('', '_blank', 'width=440,height=640,toolbar=0,location=0,menubar=0,scrollbars=0')
     if (!win) {
       alert('Please allow popups for this site to enable printing.')
       return
