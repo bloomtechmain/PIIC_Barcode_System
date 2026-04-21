@@ -145,6 +145,7 @@ export const findById = async (id: string) => {
               barcode: true,
               itemType: true,
               weight: true,
+              description: true,
               status: true,
               customer: { select: { id: true, name: true } },
               itemCorrections: {

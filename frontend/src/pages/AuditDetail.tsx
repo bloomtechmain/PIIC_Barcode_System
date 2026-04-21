@@ -534,7 +534,7 @@ export default function AuditDetail() {
 
                     {/* Ticket ID */}
                     <span className="font-mono text-[11px] text-gray-400 bg-gray-100 px-2 py-0.5 rounded flex-shrink-0 tracking-tight hidden sm:inline">
-                      {ai.barcode}
+                      {ai.item?.description?.match(/Ticket No:\s*(\S+)/)?.[1] ?? ai.barcode}
                     </span>
 
                     {/* Item type — show corrected value */}

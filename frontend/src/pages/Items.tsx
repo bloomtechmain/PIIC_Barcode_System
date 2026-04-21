@@ -203,7 +203,7 @@ export default function Items() {
                           {/* Ticket ID */}
                           <td className="px-5 py-4">
                             <span className="font-mono text-[11px] text-gray-400 bg-gray-100 px-2 py-0.5 rounded tracking-tight">
-                              {item.barcode}
+                              {item.description?.match(/Ticket No:\s*(\S+)/)?.[1] ?? item.barcode}
                             </span>
                           </td>
 

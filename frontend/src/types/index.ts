@@ -89,6 +89,7 @@ export interface AuditItem {
     barcode: string
     itemType: string
     weight: number | string
+    description?: string | null
     status: ItemStatus
     customer?: { id: string; name: string }
     itemCorrections?: ItemCorrection[]
