@@ -58,14 +58,14 @@ export default function BarcodeDisplay({ value, showPrint = false, label, large 
     styleEl.id = '__thermal_print_style__'
     styleEl.textContent = `
       @media print {
-        @page { size: 75mm auto; margin: 2mm 3mm; }
+        @page { size: 80mm auto; margin: 3mm; }
         body > *:not(#__thermal_label__) { display: none !important; visibility: hidden !important; }
         #__thermal_label__ {
           display: flex !important;
           visibility: visible !important;
           flex-direction: column;
           align-items: center;
-          width: 69mm;
+          width: 74mm;
           position: fixed;
           top: 0; left: 0;
           background: #fff;
