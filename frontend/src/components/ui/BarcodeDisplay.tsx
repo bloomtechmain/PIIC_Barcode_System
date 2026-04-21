@@ -30,90 +30,74 @@ export default function BarcodeDisplay({ value, showPrint = false, label, large 
   }, [value, large])
 
   const handlePrint = () => {
-    const svg = svgRef.current
-    if (!svg) return
+    // Render a high-quality barcode SVG in a hidden off-screen container
+    const tempContainer = document.createElement('div')
+    tempContainer.style.cssText = 'position:absolute;left:-9999px;top:0;width:300px;'
+    const tempSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+    tempContainer.appendChild(tempSvg)
+    document.body.appendChild(tempContainer)
 
-    // Clone the live, already-rendered SVG so it's guaranteed to be valid
-    const clone = svg.cloneNode(true) as SVGSVGElement
-    clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
-    clone.style.cssText = 'width:100%;height:auto;display:block;'
-    const svgData = new XMLSerializer().serializeToString(clone)
+    JsBarcode(tempSvg, value, {
+      format:       'CODE128',
+      width:        2.5,
+      height:       72,
+      displayValue: false,
+      margin:       4,
+      background:   '#ffffff',
+      lineColor:    '#000000'
+    })
+    tempSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
+    tempSvg.style.cssText = 'width:100%;height:auto;display:block;'
+    const svgHTML = new XMLSerializer().serializeToString(tempSvg)
+    document.body.removeChild(tempContainer)
 
     const displayTicket = ticketNo ?? value
 
-    // Hidden iframe avoids popup-blocker issues
-    const iframe = document.createElement('iframe')
-    iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:1px;height:1px;border:0;'
-    document.body.appendChild(iframe)
+    // Inject @media print styles that hide everything except our label
+    const styleEl = document.createElement('style')
+    styleEl.id = '__thermal_print_style__'
+    styleEl.textContent = `
+      @media print {
+        @page { size: 75mm auto; margin: 2mm 3mm; }
+        body > *:not(#__thermal_label__) { display: none !important; visibility: hidden !important; }
+        #__thermal_label__ {
+          display: flex !important;
+          visibility: visible !important;
+          flex-direction: column;
+          align-items: center;
+          width: 69mm;
+          position: fixed;
+          top: 0; left: 0;
+          background: #fff;
+          font-family: 'Courier New', Courier, monospace;
+        }
+        #__thermal_label__ .t-barcode { width: 100%; margin-bottom: 2mm; }
+        #__thermal_label__ .t-barcode svg { width: 100% !important; height: auto !important; display: block; }
+        #__thermal_label__ .t-ticket-lbl { font-size: 7pt; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: #555; margin-bottom: 0.5mm; }
+        #__thermal_label__ .t-ticket-no  { font-size: 13pt; font-weight: 700; text-align: center; letter-spacing: 0.5px; margin-bottom: 1.5mm; }
+        #__thermal_label__ .t-item-lbl   { font-size: 9pt; text-align: center; color: #333; }
+      }
+    `
+    document.head.appendChild(styleEl)
 
-    const doc = iframe.contentDocument!
-    doc.open()
-    doc.write(`<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8"/>
-    <title>Barcode Label</title>
-    <style>
-      @page {
-        size: 75mm auto;
-        margin: 2mm 3mm;
-      }
-      * { box-sizing: border-box; margin: 0; padding: 0; }
-      body {
-        width: 69mm;
-        font-family: 'Courier New', Courier, monospace;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        background: #fff;
-      }
-      .barcode-wrap {
-        width: 100%;
-        margin-bottom: 2mm;
-      }
-      .barcode-wrap svg {
-        width: 100% !important;
-        height: auto !important;
-        display: block;
-      }
-      .ticket-label {
-        font-size: 7pt;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        color: #555;
-        margin-bottom: 0.5mm;
-      }
-      .ticket-no {
-        font-size: 13pt;
-        font-weight: 700;
-        text-align: center;
-        letter-spacing: 0.5px;
-        margin-bottom: 1.5mm;
-      }
-      .item-label {
-        font-size: 9pt;
-        text-align: center;
-        color: #333;
-        margin-bottom: 1mm;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="barcode-wrap">${svgData}</div>
-    <p class="ticket-label">Ticket No</p>
-    <p class="ticket-no">${displayTicket}</p>
-    ${label ? `<p class="item-label">${label}</p>` : ''}
-  </body>
-</html>`)
-    doc.close()
+    // Build the label element
+    const labelEl = document.createElement('div')
+    labelEl.id = '__thermal_label__'
+    labelEl.style.display = 'none' // hidden in normal view
+    labelEl.innerHTML = `
+      <div class="t-barcode">${svgHTML}</div>
+      <p class="t-ticket-lbl">Ticket No</p>
+      <p class="t-ticket-no">${displayTicket}</p>
+      ${label ? `<p class="t-item-lbl">${label}</p>` : ''}
+    `
+    document.body.appendChild(labelEl)
 
-    // Wait for iframe content to paint, then print
-    setTimeout(() => {
-      iframe.contentWindow?.focus()
-      iframe.contentWindow?.print()
-      setTimeout(() => document.body.removeChild(iframe), 1000)
-    }, 400)
+    // Print using the main window — shows all installed printers
+    window.print()
+
+    // Cleanup
+    document.body.removeChild(labelEl)
+    document.head.removeChild(styleEl)
   }
 
   return (
