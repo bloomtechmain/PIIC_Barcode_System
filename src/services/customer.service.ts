@@ -1,6 +1,7 @@
 import { prisma } from '../lib/prisma'
 import { AppError } from '../middleware/error'
 import { CreateCustomerInput, UpdateCustomerInput } from '../validators/customer.validator'
+import { logActivity } from './activity-log.service'
 
 export const findAll = async () => {
   return prisma.customer.findMany({
@@ -31,14 +32,18 @@ export const findByNic = async (nic: string) => {
   return customer
 }
 
-export const create = async (data: CreateCustomerInput) => {
+export const create = async (data: CreateCustomerInput, userId: string) => {
   const existing = await prisma.customer.findUnique({ where: { nic: data.nic } })
   if (existing) throw new AppError('A customer with this NIC already exists', 409)
 
-  return prisma.customer.create({ data })
+  const customer = await prisma.customer.create({ data })
+  await logActivity({ userId, action: 'CUSTOMER_CREATE', entity: 'Customer', entityId: customer.id, details: { name: customer.name, nic: customer.nic } })
+  return customer
 }
 
-export const update = async (id: string, data: UpdateCustomerInput) => {
+export const update = async (id: string, data: UpdateCustomerInput, userId: string) => {
   await findById(id) // ensure exists
-  return prisma.customer.update({ where: { id }, data })
+  const customer = await prisma.customer.update({ where: { id }, data })
+  await logActivity({ userId, action: 'CUSTOMER_UPDATE', entity: 'Customer', entityId: id, details: data as Record<string, unknown> })
+  return customer
 }

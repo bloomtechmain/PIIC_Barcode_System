@@ -49,6 +49,7 @@ export const register = async (data: {
     }
   })
 
+  await logActivity({ userId: user.id, action: 'USER_REGISTER', entity: 'User', entityId: user.id, details: { name: user.name, email: user.email, role: user.role } })
   return user
 }
 

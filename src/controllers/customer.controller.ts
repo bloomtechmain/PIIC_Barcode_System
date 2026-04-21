@@ -16,12 +16,12 @@ export const getById = asyncHandler(async (req: Request, res: Response) => {
 
 export const create = asyncHandler(async (req: Request, res: Response) => {
   const body = createCustomerSchema.parse(req.body)
-  const customer = await customerService.create(body)
+  const customer = await customerService.create(body, req.user!.userId)
   sendCreated(res, customer, 'Customer created successfully')
 })
 
 export const update = asyncHandler(async (req: Request, res: Response) => {
   const body = updateCustomerSchema.parse(req.body)
-  const customer = await customerService.update(req.params.id, body)
+  const customer = await customerService.update(req.params.id, body, req.user!.userId)
   sendSuccess(res, customer, 'Customer updated successfully')
 })

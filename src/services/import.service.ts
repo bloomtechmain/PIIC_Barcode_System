@@ -2,6 +2,7 @@ import * as XLSX from 'xlsx'
 import { ScanType } from '@prisma/client'
 import { prisma } from '../lib/prisma'
 import { generateBarcode } from '../utils/barcode-generator'
+import { logActivity } from './activity-log.service'
 
 export interface ImportResult {
   customersCreated: number
@@ -225,5 +226,6 @@ export async function importFromBuffer(
     result.itemsCreated++
   }
 
+  await logActivity({ userId: createdById, action: 'CSV_IMPORT', entity: 'Import', details: { itemsCreated: result.itemsCreated, itemsSkipped: result.itemsSkipped, customersCreated: result.customersCreated, errors: result.errors.length } })
   return result
 }

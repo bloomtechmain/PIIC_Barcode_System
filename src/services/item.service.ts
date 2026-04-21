@@ -7,6 +7,7 @@ import {
   ItemFilterInput,
   UpdateItemInput
 } from '../validators/item.validator'
+import { logActivity } from './activity-log.service'
 
 const ITEM_DETAIL_INCLUDE = {
   customer: { select: { id: true, name: true, nic: true, phone: true } },
@@ -110,19 +111,22 @@ export const create = async (data: CreateItemInput, createdById: string) => {
       }
     })
 
+    await logActivity({ userId: createdById, action: 'ITEM_CREATE', entity: 'Item', entityId: item.id, details: { barcode: item.barcode, itemType: item.itemType, customerId: item.customerId } })
     return item
   })
 }
 
-export const update = async (id: string, data: UpdateItemInput) => {
+export const update = async (id: string, data: UpdateItemInput, userId: string) => {
   await findById(id) // ensure exists
-  return prisma.item.update({
+  const item = await prisma.item.update({
     where: { id },
     data,
     include: {
       customer: { select: { id: true, name: true, nic: true } }
     }
   })
+  await logActivity({ userId, action: 'ITEM_UPDATE', entity: 'Item', entityId: id, details: data as Record<string, unknown> })
+  return item
 }
 
 export const verifyBarcode = async (barcode: string, scannedById: string) => {

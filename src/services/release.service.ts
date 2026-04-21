@@ -2,6 +2,7 @@ import { ItemStatus } from '@prisma/client'
 import { prisma } from '../lib/prisma'
 import { AppError } from '../middleware/error'
 import { CreateReleaseInput } from '../validators/release.validator'
+import { logActivity } from './activity-log.service'
 
 export const create = async (data: CreateReleaseInput, releasedById: string) => {
   const item = await prisma.item.findUnique({ where: { id: data.itemId } })
@@ -28,6 +29,7 @@ export const create = async (data: CreateReleaseInput, releasedById: string) => 
       data: { status: ItemStatus.RELEASED }
     })
 
+    await logActivity({ userId: releasedById, action: 'ITEM_RELEASE', entity: 'Item', entityId: data.itemId, details: { releaseId: release.id, notes: data.notes } })
     return release
   })
 }

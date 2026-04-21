@@ -32,7 +32,7 @@ export const create = asyncHandler(async (req: Request, res: Response) => {
 
 export const update = asyncHandler(async (req: Request, res: Response) => {
   const body = updateItemSchema.parse(req.body)
-  const item = await itemService.update(req.params.id, body)
+  const item = await itemService.update(req.params.id, body, req.user!.userId)
   sendSuccess(res, item, 'Item updated successfully')
 })
 

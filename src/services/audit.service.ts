@@ -2,13 +2,14 @@ import { AuditItemStatus, ItemStatus, ScanType } from '@prisma/client'
 import { prisma } from '../lib/prisma'
 import { AppError } from '../middleware/error'
 import { CreateAuditInput, UpdateAuditItemInput, BulkReleaseInput } from '../validators/audit.validator'
+import { logActivity } from './activity-log.service'
 
 export const create = async (data: CreateAuditInput, createdById: string) => {
   const totalItemsAtTime = await prisma.item.count({
     where: { status: ItemStatus.ACTIVE }
   })
 
-  return prisma.audit.create({
+  const audit = await prisma.audit.create({
     data: {
       createdById,
       totalItemsAtTime,
@@ -18,6 +19,8 @@ export const create = async (data: CreateAuditInput, createdById: string) => {
       createdBy: { select: { id: true, name: true } }
     }
   })
+  await logActivity({ userId: createdById, action: 'AUDIT_CREATE', entity: 'Audit', entityId: audit.id, details: { totalItemsAtTime } })
+  return audit
 }
 
 export const scanBarcode = async (
@@ -79,7 +82,7 @@ export const scanBarcode = async (
   })
 }
 
-export const finalizeAudit = async (auditId: string) => {
+export const finalizeAudit = async (auditId: string, userId: string) => {
   const audit = await prisma.audit.findUnique({
     where: { id: auditId },
     include: { _count: { select: { auditItems: true } } }
@@ -121,7 +124,7 @@ export const finalizeAudit = async (auditId: string) => {
     })
   })
 
-  return {
+  const summary = {
     auditId,
     totalActive: activeItems.length,
     scanned: audit._count.auditItems,
@@ -129,6 +132,8 @@ export const finalizeAudit = async (auditId: string) => {
     missing: missingItems.length,
     finalizedAt: new Date()
   }
+  await logActivity({ userId, action: 'AUDIT_FINALIZE', entity: 'Audit', entityId: auditId, details: { found: summary.found, missing: summary.missing, scanned: summary.scanned } })
+  return summary
 }
 
 export const findAll = async () => {
@@ -221,6 +226,9 @@ export const updateAuditItem = async (
       await tx.item.update({ where: { id: item.id }, data: updateData })
     }
 
+    const hasCorrections = (data.corrections?.length ?? 0) > 0
+    const action = hasCorrections ? 'AUDIT_ITEM_CORRECTION' : 'AUDIT_ITEM_REMARK'
+    await logActivity({ userId, action, entity: 'AuditItem', entityId: auditItemId, details: { auditId, remarks: data.remarks, corrections: data.corrections } })
     return updated
   })
 }
@@ -274,5 +282,6 @@ export const bulkRelease = async (
     return results
   })
 
+  await logActivity({ userId: releasedById, action: 'BULK_RELEASE', entity: 'Audit', entityId: auditId, details: { released: released.length, skipped: skipped.length, notes: data.notes } })
   return { released: released.length, skipped: skipped.length, releases: released }
 }

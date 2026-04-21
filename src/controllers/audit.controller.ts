@@ -27,7 +27,7 @@ export const scan = asyncHandler(async (req: Request, res: Response) => {
 })
 
 export const finalize = asyncHandler(async (req: Request, res: Response) => {
-  const result = await auditService.finalizeAudit(req.params.id)
+  const result = await auditService.finalizeAudit(req.params.id, req.user!.userId)
   sendSuccess(res, result, 'Audit finalized')
 })
 
