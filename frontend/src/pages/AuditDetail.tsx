@@ -260,10 +260,11 @@ export default function AuditDetail() {
     onSuccess: (item: AuditItem) => {
       qc.invalidateQueries({ queryKey: ['audit', id] })
       setBarcode('')
+      const owner = item.item?.customer?.name
       const feedbackMap = {
-        FOUND:   { message: `FOUND — item registered`,      type: 'success' as const },
-        MISSING: { message: `MISSING — item not in system`,  type: 'error'   as const },
-        UNKNOWN: { message: `UNKNOWN — barcode not in system`, type: 'warn'  as const }
+        FOUND:   { message: owner ? `FOUND — ${owner} · ${item.item?.itemType ?? ''}` : 'FOUND — item registered', type: 'success' as const },
+        MISSING: { message: `MISSING — item not in system`,    type: 'error'   as const },
+        UNKNOWN: { message: `UNKNOWN — barcode not in system`, type: 'warn'    as const }
       }
       setScanFeedback(feedbackMap[item.status])
       setTimeout(() => setScanFeedback(null), 2500)
@@ -552,11 +553,11 @@ export default function AuditDetail() {
                     </span>
 
                     {/* Customer */}
-                    <span className="flex-shrink-0 w-32">
+                    <span className="flex-shrink-0 w-36 min-w-0">
                       {ai.item?.customer ? (
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1.5" title={ai.item.customer.name}>
                           <CustomerAvatar name={ai.item.customer.name} size="xs" />
-                          <span className="text-sm truncate">{ai.item.customer.name}</span>
+                          <span className="text-sm truncate min-w-0">{ai.item.customer.name}</span>
                         </div>
                       ) : <span className="text-gray-400 text-sm">—</span>}
                     </span>

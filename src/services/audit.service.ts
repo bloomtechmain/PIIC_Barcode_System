@@ -55,7 +55,16 @@ export const scanBarcode = async (
   return prisma.$transaction(async tx => {
     const auditItem = await tx.auditItem.create({
       data: { auditId, barcode, status, itemId },
-      include: { item: { select: { id: true, itemType: true, weight: true } } }
+      include: {
+        item: {
+          select: {
+            id: true,
+            itemType: true,
+            weight: true,
+            customer: { select: { id: true, name: true } }
+          }
+        }
+      }
     })
 
     // Log the scan if item is known
