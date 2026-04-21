@@ -324,6 +324,7 @@ export default function Items() {
             <div className="bg-gradient-to-br from-navy-50 to-blue-50 rounded-2xl border border-navy-100 p-4 flex flex-col items-center gap-3">
               <BarcodeDisplay value={createdItem.barcode} showPrint
                 label={selectedCustomer ? `${selectedCustomer.name} · ${createdItem.itemType}` : createdItem.itemType}
+                ticketNo={createdItem.description?.match(/Ticket No:\s*(\S+)/)?.[1]}
               />
             </div>
 

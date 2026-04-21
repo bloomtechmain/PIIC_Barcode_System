@@ -33,6 +33,7 @@ export default function ItemDetail() {
   const barcodeLabel = item.customer
     ? `${item.customer.name} · ${item.itemType}`
     : item.itemType
+  const ticketNo = item.description?.match(/Ticket No:\s*(\S+)/)?.[1]
 
   return (
     <div className="space-y-4">
@@ -81,7 +82,7 @@ export default function ItemDetail() {
           </div>
           <div className="flex-1 flex flex-col items-center justify-center px-6 pb-6 pt-4">
             <div className="w-full bg-gray-50 rounded-2xl border border-gray-100 flex flex-col items-center justify-center py-8 px-4">
-              <BarcodeDisplay value={item.barcode} showPrint label={barcodeLabel} large />
+              <BarcodeDisplay value={item.barcode} showPrint label={barcodeLabel} large ticketNo={ticketNo} />
             </div>
           </div>
         </div>
