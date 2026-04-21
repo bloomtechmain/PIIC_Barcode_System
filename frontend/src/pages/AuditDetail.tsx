@@ -261,10 +261,13 @@ export default function AuditDetail() {
       qc.invalidateQueries({ queryKey: ['audit', id] })
       setBarcode('')
       const owner = item.item?.customer?.name
+      const isReleased = item.item?.status === 'RELEASED'
       const feedbackMap = {
         FOUND:   { message: owner ? `FOUND — ${owner} · ${item.item?.itemType ?? ''}` : 'FOUND — item registered', type: 'success' as const },
-        MISSING: { message: `MISSING — item not in system`,    type: 'error'   as const },
-        UNKNOWN: { message: `UNKNOWN — barcode not in system`, type: 'warn'    as const }
+        MISSING: { message: `MISSING — item not in system`, type: 'error' as const },
+        UNKNOWN: isReleased
+          ? { message: owner ? `RELEASED — ${owner} · ${item.item?.itemType ?? ''}` : 'RELEASED — item already released', type: 'success' as const }
+          : { message: `UNKNOWN — barcode not in system`, type: 'warn' as const }
       }
       setScanFeedback(feedbackMap[item.status])
       setTimeout(() => setScanFeedback(null), 2500)
@@ -489,7 +492,7 @@ export default function AuditDetail() {
               const effectiveWeight   = latestCorrection(allCorrections, 'weight')?.newValue   ?? ai.item?.weight
               const hasCorrectionHistory = allCorrections.length > 0
               const isReleaseable = isFinalized && isAdmin && ai.status === 'MISSING' && !!ai.itemId && ai.item?.status !== 'RELEASED'
-              const isItemReleased = ai.status === 'MISSING' && ai.item?.status === 'RELEASED'
+              const isItemReleased = ai.item?.status === 'RELEASED'
               const isChecked = isReleaseable && selected.has(ai.itemId!)
 
               return (
@@ -553,11 +556,11 @@ export default function AuditDetail() {
                     </span>
 
                     {/* Customer */}
-                    <span className="flex-shrink-0 w-36 min-w-0">
+                    <span className="flex-shrink-0">
                       {ai.item?.customer ? (
-                        <div className="flex items-center gap-1.5" title={ai.item.customer.name}>
+                        <div className="flex items-center gap-1.5">
                           <CustomerAvatar name={ai.item.customer.name} size="xs" />
-                          <span className="text-sm truncate min-w-0">{ai.item.customer.name}</span>
+                          <span className="text-sm whitespace-nowrap">{ai.item.customer.name}</span>
                         </div>
                       ) : <span className="text-gray-400 text-sm">—</span>}
                     </span>

@@ -61,6 +61,7 @@ export const scanBarcode = async (
             id: true,
             itemType: true,
             weight: true,
+            status: true,
             customer: { select: { id: true, name: true } }
           }
         }
