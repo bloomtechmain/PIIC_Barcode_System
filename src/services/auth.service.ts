@@ -3,6 +3,7 @@ import { prisma } from '../lib/prisma'
 import { AppError } from '../middleware/error'
 import { comparePassword, hashPassword } from '../utils/hash'
 import { signToken } from '../utils/jwt'
+import { logActivity } from './activity-log.service'
 
 export const login = async (email: string, password: string) => {
   const user = await prisma.user.findUnique({ where: { email } })
@@ -14,6 +15,8 @@ export const login = async (email: string, password: string) => {
   if (!valid) throw new AppError('Invalid email or password', 401)
 
   const token = signToken({ userId: user.id, email: user.email, role: user.role })
+
+  await logActivity({ userId: user.id, action: 'LOGIN', entity: 'User', entityId: user.id })
 
   const { passwordHash: _, ...userWithoutPassword } = user
   return { token, user: userWithoutPassword }

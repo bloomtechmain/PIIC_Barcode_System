@@ -10,8 +10,9 @@ datasource db {
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
 enum Role {
-  ADMIN
   STAFF
+  ADMIN
+  SUPER_ADMIN
 }
 
 enum ItemStatus {
@@ -46,6 +47,7 @@ model User {
   audits          Audit[]
   barcodeLogs     BarcodeLog[]
   itemCorrections ItemCorrection[]
+  activityLogs    ActivityLog[]
 
   @@map("users")
 }
@@ -178,4 +180,22 @@ model BarcodeLog {
   @@index([scanType])
   @@index([scannedAt])
   @@map("barcode_logs")
+}
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String
+  entity    String?
+  entityId  String?
+  details   Json?
+  ip        String?
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("activity_logs")
 }

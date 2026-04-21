@@ -10,6 +10,7 @@ interface AuthContextType extends AuthState {
   login: (token: string, user: User) => void
   logout: () => void
   isAdmin: boolean
+  isSuperAdmin: boolean
   isAuthenticated: boolean
 }
 
@@ -43,7 +44,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         ...auth,
         login,
         logout,
-        isAdmin: auth.user?.role === 'ADMIN',
+        isAdmin: auth.user?.role === 'ADMIN' || auth.user?.role === 'SUPER_ADMIN',
+        isSuperAdmin: auth.user?.role === 'SUPER_ADMIN',
         isAuthenticated: !!auth.token
       }}
     >

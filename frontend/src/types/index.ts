@@ -1,4 +1,4 @@
-export type Role = 'ADMIN' | 'STAFF'
+export type Role = 'ADMIN' | 'STAFF' | 'SUPER_ADMIN'
 export type ItemStatus = 'ACTIVE' | 'RELEASED'
 export type AuditItemStatus = 'FOUND' | 'MISSING' | 'UNKNOWN'
 export type ScanType = 'AUDIT' | 'CREATE' | 'VERIFY'
@@ -111,6 +111,18 @@ export interface Summary {
   audits: number
   lastAudit: { id: string; finalizedAt: string; totalItemsAtTime: number } | null
   breakdownByType: { itemType: string; count: number; totalWeight: string | null }[]
+}
+
+export interface ActivityLog {
+  id: string
+  userId: string | null
+  action: string
+  entity: string | null
+  entityId: string | null
+  details: Record<string, unknown> | null
+  ip: string | null
+  createdAt: string
+  user: { id: string; name: string; email: string; role: Role } | null
 }
 
 export interface ApiResponse<T> {

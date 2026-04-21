@@ -2,7 +2,7 @@ import { Outlet } from 'react-router-dom'
 import { NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Users, Package, ArrowUpFromLine,
-  ClipboardCheck, BarChart3, LogOut, Gem, ChevronRight
+  ClipboardCheck, BarChart3, LogOut, Gem, ChevronRight, Activity
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
@@ -18,13 +18,17 @@ const adminItems = [
   { to: '/reports', icon: BarChart3, label: 'Reports' },
 ]
 
+const superAdminItems = [
+  { to: '/activity-logs', icon: Activity, label: 'Activity Logs' },
+]
+
 export default function Layout() {
-  const { user, logout, isAdmin } = useAuth()
+  const { user, logout, isAdmin, isSuperAdmin } = useAuth()
   const navigate = useNavigate()
 
   const handleLogout = () => { logout(); navigate('/login') }
 
-  const allBottomItems = [...navItems, ...(isAdmin ? adminItems : [])]
+  const allBottomItems = [...navItems, ...(isAdmin ? adminItems : []), ...(isSuperAdmin ? superAdminItems : [])]
 
   return (
     <div className="flex h-screen bg-navy-100 overflow-hidden">
@@ -91,6 +95,38 @@ export default function Layout() {
               <div className="relative z-10 mx-2 my-3 h-px bg-gradient-to-r from-transparent via-navy-400 to-transparent" />
               <p className="px-3 py-1 text-[10px] font-bold text-navy-400 uppercase tracking-widest">Admin</p>
               {adminItems.map(({ to, icon: Icon, label }) => (
+                <NavLink
+                  key={to}
+                  to={to}
+                  className={({ isActive }) =>
+                    `group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ${
+                      isActive
+                        ? 'bg-gradient-to-r from-magenta-500 to-pink-400 text-white shadow-md shadow-magenta-900/30'
+                        : 'text-navy-200 hover:bg-white/10 hover:text-white'
+                    }`
+                  }
+                >
+                  {({ isActive }) => (
+                    <>
+                      <span className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-all ${
+                        isActive ? 'bg-white/20' : 'bg-navy-500/60 group-hover:bg-white/10'
+                      }`}>
+                        <Icon size={16} />
+                      </span>
+                      <span className="flex-1">{label}</span>
+                      {isActive && <ChevronRight size={13} className="opacity-60" />}
+                    </>
+                  )}
+                </NavLink>
+              ))}
+            </>
+          )}
+
+          {isSuperAdmin && (
+            <>
+              <div className="relative z-10 mx-2 my-3 h-px bg-gradient-to-r from-transparent via-navy-400 to-transparent" />
+              <p className="px-3 py-1 text-[10px] font-bold text-navy-400 uppercase tracking-widest">Super Admin</p>
+              {superAdminItems.map(({ to, icon: Icon, label }) => (
                 <NavLink
                   key={to}
                   to={to}

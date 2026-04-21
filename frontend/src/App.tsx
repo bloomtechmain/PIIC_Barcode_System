@@ -13,6 +13,7 @@ import Releases from './pages/Releases'
 import Audits from './pages/Audits'
 import AuditDetail from './pages/AuditDetail'
 import Reports from './pages/Reports'
+import ActivityLogs from './pages/ActivityLogs'
 
 export default function App() {
   return (
@@ -32,6 +33,7 @@ export default function App() {
               <Route path="/audits" element={<Audits />} />
               <Route path="/audits/:id" element={<AuditDetail />} />
               <Route path="/reports" element={<Reports />} />
+              <Route path="/activity-logs" element={<ActivityLogs />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>
           </Route>
