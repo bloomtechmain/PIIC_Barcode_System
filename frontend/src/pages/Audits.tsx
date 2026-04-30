@@ -3,43 +3,74 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import {
   Plus, ClipboardCheck, CheckCircle,
-  Calendar, FileText, ChevronRight, Scan, Package, Hash
+  Calendar, FileText, ChevronRight, Scan, Package, Hash,
+  GitBranch, ClipboardList
 } from 'lucide-react'
-import { getAudits, createAudit } from '../api/audit.api'
+import { getAudits, createAudit, createInitialAudit } from '../api/audit.api'
+import { getBranches } from '../api/branch.api'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
 import EmptyState from '../components/ui/EmptyState'
 import Drawer from '../components/ui/Drawer'
 import { useAuth } from '../context/AuthContext'
 
+type DrawerMode = 'standard' | 'initial'
+
 export default function Audits() {
   const navigate = useNavigate()
   const qc = useQueryClient()
   const { isAdmin } = useAuth()
-  const [showDrawer, setShowDrawer] = useState(false)
-  const [notes, setNotes]           = useState('')
-  const [formError, setFormError]   = useState('')
+  const [showDrawer, setShowDrawer]   = useState(false)
+  const [drawerMode, setDrawerMode]   = useState<DrawerMode>('standard')
+  const [notes, setNotes]             = useState('')
+  const [filterDateFrom, setFilterDateFrom] = useState('')
+  const [filterDateTo, setFilterDateTo]     = useState('')
+  const [filterBranchId, setFilterBranchId] = useState('')
+  const [formError, setFormError]     = useState('')
 
   const { data: audits = [], isLoading } = useQuery({
     queryKey: ['audits'],
     queryFn: getAudits
   })
 
-  const mutation = useMutation({
+  const { data: branches = [] } = useQuery({
+    queryKey: ['branches'],
+    queryFn: getBranches,
+    enabled: showDrawer && drawerMode === 'initial'
+  })
+
+  const standardMutation = useMutation({
     mutationFn: () => createAudit({ notes: notes || undefined }),
     onSuccess: audit => {
       qc.invalidateQueries({ queryKey: ['audits'] })
       setShowDrawer(false)
-      setNotes('')
       navigate(`/audits/${audit.id}`)
     },
     onError: (err: unknown) => {
-      const msg = (err as { response?: { data?: { message?: string } } })
-        ?.response?.data?.message ?? 'Failed to create audit'
-      setFormError(msg)
+      setFormError((err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Failed to create audit')
     }
   })
 
-  const openDrawer  = () => { setFormError(''); setNotes(''); setShowDrawer(true) }
+  const initialMutation = useMutation({
+    mutationFn: () => createInitialAudit({
+      notes:          notes          || undefined,
+      filterDateFrom: filterDateFrom || undefined,
+      filterDateTo:   filterDateTo   || undefined,
+      filterBranchId: filterBranchId || undefined,
+    }),
+    onSuccess: audit => {
+      qc.invalidateQueries({ queryKey: ['audits'] })
+      setShowDrawer(false)
+      navigate(`/audits/initial/${audit.id}`)
+    },
+    onError: (err: unknown) => {
+      setFormError((err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Failed to create audit')
+    }
+  })
+
+  const openDrawer = (mode: DrawerMode) => {
+    setFormError(''); setNotes(''); setFilterDateFrom(''); setFilterDateTo(''); setFilterBranchId('')
+    setDrawerMode(mode); setShowDrawer(true)
+  }
   const closeDrawer = () => { setShowDrawer(false); setFormError('') }
 
   const finalized   = audits.filter(a => !!a.finalizedAt).length
@@ -59,11 +90,18 @@ export default function Audits() {
           </p>
         </div>
         {isAdmin && (
-          <button className="btn-primary" onClick={openDrawer}>
-            <Plus size={16} />
-            <span className="hidden sm:inline">New Audit</span>
-            <span className="sm:hidden">New</span>
-          </button>
+          <div className="flex gap-2">
+            <button className="btn-secondary gap-1.5" onClick={() => openDrawer('initial')}>
+              <ClipboardList size={15} />
+              <span className="hidden sm:inline">Initial Audit</span>
+              <span className="sm:hidden">Initial</span>
+            </button>
+            <button className="btn-primary" onClick={() => openDrawer('standard')}>
+              <Plus size={16} />
+              <span className="hidden sm:inline">New Audit</span>
+              <span className="sm:hidden">New</span>
+            </button>
+          </div>
         )}
       </div>
 
@@ -114,8 +152,9 @@ export default function Audits() {
               <thead>
                 <tr className="bg-gradient-to-r from-navy-600 to-navy-500">
                   <th className="px-5 py-3.5 text-left text-xs font-semibold text-navy-100 uppercase tracking-wider">Date</th>
+                  <th className="px-5 py-3.5 text-left text-xs font-semibold text-navy-100 uppercase tracking-wider">Type</th>
                   <th className="px-5 py-3.5 text-left text-xs font-semibold text-navy-100 uppercase tracking-wider">Created By</th>
-                  <th className="px-5 py-3.5 text-center text-xs font-semibold text-navy-100 uppercase tracking-wider">Items at Time</th>
+                  <th className="px-5 py-3.5 text-center text-xs font-semibold text-navy-100 uppercase tracking-wider">Items</th>
                   <th className="px-5 py-3.5 text-center text-xs font-semibold text-navy-100 uppercase tracking-wider">Scanned</th>
                   <th className="px-5 py-3.5 text-left text-xs font-semibold text-navy-100 uppercase tracking-wider">Status</th>
                   <th className="px-5 py-3.5" />
@@ -129,11 +168,12 @@ export default function Audits() {
                   const coverage  = a.totalItemsAtTime > 0
                     ? Math.round((scanned / a.totalItemsAtTime) * 100)
                     : 0
+                  const isInitial = a.auditType === 'INITIAL'
 
                   return (
                     <tr
                       key={a.id}
-                      onClick={() => navigate(`/audits/${a.id}`)}
+                      onClick={() => navigate(isInitial ? `/audits/initial/${a.id}` : `/audits/${a.id}`)}
                       className="group cursor-pointer hover:bg-gradient-to-r hover:from-navy-50 hover:to-blue-50 transition-colors"
                     >
                       {/* Date */}
@@ -145,6 +185,19 @@ export default function Audits() {
                         <span className="text-[11px] text-gray-400 ml-5">
                           {new Date(a.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                         </span>
+                      </td>
+
+                      {/* Type */}
+                      <td className="px-5 py-4">
+                        {isInitial ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-gradient-to-r from-purple-500 to-violet-400 text-white shadow-sm">
+                            <ClipboardList size={10} /> Initial
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-gradient-to-r from-navy-500 to-blue-400 text-white shadow-sm">
+                            <Scan size={10} /> Standard
+                          </span>
+                        )}
                       </td>
 
                       {/* Created by */}
@@ -169,22 +222,26 @@ export default function Audits() {
 
                       {/* Scanned + coverage bar */}
                       <td className="px-5 py-4 text-center">
-                        <div className="flex flex-col items-center gap-1">
-                          <span className="font-semibold text-gray-700 text-xs">{scanned}</span>
-                          <div className="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                            <div
-                              className={`h-full rounded-full transition-all duration-500 ${
-                                coverage === 100
-                                  ? 'bg-gradient-to-r from-emerald-500 to-teal-400'
-                                  : coverage > 50
-                                  ? 'bg-gradient-to-r from-navy-500 to-blue-400'
-                                  : 'bg-gradient-to-r from-magenta-500 to-pink-400'
-                              }`}
-                              style={{ width: `${coverage}%` }}
-                            />
+                        {isInitial ? (
+                          <span className="text-xs text-gray-300">—</span>
+                        ) : (
+                          <div className="flex flex-col items-center gap-1">
+                            <span className="font-semibold text-gray-700 text-xs">{scanned}</span>
+                            <div className="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                              <div
+                                className={`h-full rounded-full transition-all duration-500 ${
+                                  coverage === 100
+                                    ? 'bg-gradient-to-r from-emerald-500 to-teal-400'
+                                    : coverage > 50
+                                    ? 'bg-gradient-to-r from-navy-500 to-blue-400'
+                                    : 'bg-gradient-to-r from-magenta-500 to-pink-400'
+                                }`}
+                                style={{ width: `${coverage}%` }}
+                              />
+                            </div>
+                            <span className="text-[10px] text-gray-400">{coverage}%</span>
                           </div>
-                          <span className="text-[10px] text-gray-400">{coverage}%</span>
-                        </div>
+                        )}
                       </td>
 
                       {/* Status */}
@@ -221,12 +278,12 @@ export default function Audits() {
         )}
       </div>
 
-      {/* ── New Audit Drawer ─────────────────────────────────────────── */}
+      {/* ── Audit Drawer ─────────────────────────────────────────────── */}
       <Drawer
         open={showDrawer}
         onClose={closeDrawer}
-        title="Start New Audit"
-        subtitle="A snapshot of current active items will be taken"
+        title={drawerMode === 'initial' ? 'Start Initial Audit' : 'Start New Audit'}
+        subtitle={drawerMode === 'initial' ? 'Check and edit items without barcode scanning' : 'A snapshot of current active items will be taken'}
       >
         <div className="space-y-6">
           {formError && (
@@ -236,17 +293,21 @@ export default function Audits() {
           )}
 
           {/* Info banner */}
-          <div className="bg-gradient-to-br from-navy-50 to-blue-50 border border-navy-100 rounded-2xl p-4 space-y-3">
+          <div className={`bg-gradient-to-br border rounded-2xl p-4 space-y-3 ${drawerMode === 'initial' ? 'from-purple-50 to-violet-50 border-purple-100' : 'from-navy-50 to-blue-50 border-navy-100'}`}>
             <p className="text-sm font-semibold text-navy-700 flex items-center gap-2">
-              <Scan size={15} className="text-magenta-500" />
+              {drawerMode === 'initial' ? <ClipboardList size={15} className="text-purple-500" /> : <Scan size={15} className="text-magenta-500" />}
               How it works
             </p>
             <div className="space-y-2">
-              {[
+              {(drawerMode === 'initial' ? [
+                { icon: Calendar,      text: 'Filter items by pawn date range and/or branch' },
+                { icon: ClipboardList, text: 'Browse items grouped by ticket number' },
+                { icon: CheckCircle,   text: 'Edit item details and finalize when done' },
+              ] : [
                 { icon: Hash,          text: 'Active item count is snapshotted at creation time' },
                 { icon: Scan,          text: 'Scan barcodes to mark items as Found or Missing' },
                 { icon: CheckCircle,   text: 'Finalize to lock results and generate a report' },
-              ].map(({ icon: Icon, text }) => (
+              ]).map(({ icon: Icon, text }) => (
                 <div key={text} className="flex items-start gap-2.5 text-xs text-navy-600">
                   <div className="w-5 h-5 bg-navy-100 rounded-md flex items-center justify-center flex-shrink-0 mt-0.5">
                     <Icon size={11} className="text-navy-600" />
@@ -257,11 +318,41 @@ export default function Audits() {
             </div>
           </div>
 
+          {/* Initial audit filters */}
+          {drawerMode === 'initial' && (
+            <div className="space-y-4">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest">Filters <span className="text-gray-300 font-normal normal-case tracking-normal">(optional — leave blank for all items)</span></p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="label">Date From</label>
+                  <div className="relative">
+                    <Calendar size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input className="input pl-9 text-sm" type="date" value={filterDateFrom} onChange={e => setFilterDateFrom(e.target.value)} />
+                  </div>
+                </div>
+                <div>
+                  <label className="label">Date To</label>
+                  <div className="relative">
+                    <Calendar size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input className="input pl-9 text-sm" type="date" value={filterDateTo} onChange={e => setFilterDateTo(e.target.value)} />
+                  </div>
+                </div>
+              </div>
+              <div>
+                <label className="label">Branch</label>
+                <div className="relative">
+                  <GitBranch size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <select className="input pl-9 text-sm" value={filterBranchId} onChange={e => setFilterBranchId(e.target.value)}>
+                    <option value="">— All branches —</option>
+                    {branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                  </select>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Notes */}
           <div>
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">
-              Session Notes
-            </p>
             <label className="label">
               Notes <span className="text-gray-400 font-normal text-xs">(optional)</span>
             </label>
@@ -270,7 +361,7 @@ export default function Audits() {
               <textarea
                 className="input pl-9 resize-none"
                 rows={3}
-                placeholder="e.g. Monthly vault audit, Q2 check…"
+                placeholder={drawerMode === 'initial' ? 'e.g. Initial inventory check…' : 'e.g. Monthly vault audit, Q2 check…'}
                 value={notes}
                 onChange={e => setNotes(e.target.value)}
               />
@@ -281,10 +372,10 @@ export default function Audits() {
           <div className="space-y-2 pt-1">
             <button
               className="btn-primary w-full justify-center py-3 text-base"
-              onClick={() => mutation.mutate()}
-              disabled={mutation.isPending}
+              onClick={() => drawerMode === 'initial' ? initialMutation.mutate() : standardMutation.mutate()}
+              disabled={standardMutation.isPending || initialMutation.isPending}
             >
-              {mutation.isPending ? 'Creating…' : 'Start Audit Session'}
+              {(standardMutation.isPending || initialMutation.isPending) ? 'Creating…' : drawerMode === 'initial' ? 'Start Initial Audit' : 'Start Audit Session'}
             </button>
             <button className="btn-secondary w-full justify-center py-2.5" onClick={closeDrawer}>
               Cancel

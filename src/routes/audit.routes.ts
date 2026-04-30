@@ -16,6 +16,15 @@ router.get('/:id', auditController.getById)
 // POST /api/audits  — ADMIN only
 router.post('/', requireRole('ADMIN', 'SUPER_ADMIN'), auditController.create)
 
+// POST /api/audits/initial  — ADMIN only
+router.post('/initial', requireRole('ADMIN', 'SUPER_ADMIN'), auditController.createInitial)
+
+// GET /api/audits/:id/items  — initial audit items
+router.get('/:id/items', auditController.getInitialAuditItems)
+
+// POST /api/audits/:id/add-item  — ADMIN only
+router.post('/:id/add-item', requireRole('ADMIN', 'SUPER_ADMIN'), auditController.addAuditItem)
+
 // POST /api/audits/:id/scan  — any authenticated user
 router.post('/:id/scan', auditController.scan)
 

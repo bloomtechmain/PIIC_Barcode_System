@@ -1,5 +1,5 @@
 import api from './axios'
-import { ApiResponse, Audit, AuditItem } from '../types'
+import { ApiResponse, Audit, AuditItem, Item } from '../types'
 
 export const getAudits = async () => {
   const res = await api.get<ApiResponse<Audit[]>>('/audits')
@@ -39,6 +39,38 @@ export const bulkRelease = async (
     skipped: number
     releases: { id: string; itemId: string }[]
   }>>(`/audits/${auditId}/bulk-release`, data)
+  return res.data.data
+}
+
+export const addAuditItem = async (
+  auditId: string,
+  data: {
+    customerId:  string
+    ticketNo:    string
+    pawnDate:    string
+    itemType:    string
+    weight:      number
+    grossWeight?: number | null
+    karatage?:   number | null
+    remarks?:    string | null
+  }
+) => {
+  const res = await api.post<ApiResponse<Item>>(`/audits/${auditId}/add-item`, data)
+  return res.data.data
+}
+
+export const createInitialAudit = async (data: {
+  notes?: string
+  filterDateFrom?: string
+  filterDateTo?: string
+  filterBranchId?: string
+}) => {
+  const res = await api.post<ApiResponse<Audit>>('/audits/initial', data)
+  return res.data.data
+}
+
+export const getInitialAuditItems = async (auditId: string) => {
+  const res = await api.get<ApiResponse<{ items: Item[]; filterBranch: { id: string; name: string } | null }>>(`/audits/${auditId}/items`)
   return res.data.data
 }
 

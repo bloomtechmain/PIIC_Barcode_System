@@ -1,6 +1,6 @@
 import { Request, Response } from 'express'
 import * as auditService from '../services/audit.service'
-import { createAuditSchema, scanBarcodeSchema, updateAuditItemSchema, bulkReleaseSchema } from '../validators/audit.validator'
+import { addAuditItemSchema, createAuditSchema, createInitialAuditSchema, scanBarcodeSchema, updateAuditItemSchema, bulkReleaseSchema } from '../validators/audit.validator'
 import { sendSuccess, sendCreated } from '../utils/response'
 import { asyncHandler } from '../utils/async-handler'
 
@@ -46,4 +46,21 @@ export const bulkRelease = asyncHandler(async (req: Request, res: Response) => {
   const body = bulkReleaseSchema.parse(req.body)
   const result = await auditService.bulkRelease(req.params.id, body, req.user!.userId)
   sendCreated(res, result, `${result.released} item(s) released successfully`)
+})
+
+export const createInitial = asyncHandler(async (req: Request, res: Response) => {
+  const body = createInitialAuditSchema.parse(req.body)
+  const audit = await auditService.createInitial(body, req.user!.userId)
+  sendCreated(res, audit, 'Initial audit created')
+})
+
+export const getInitialAuditItems = asyncHandler(async (req: Request, res: Response) => {
+  const result = await auditService.getInitialAuditItems(req.params.id)
+  sendSuccess(res, result)
+})
+
+export const addAuditItem = asyncHandler(async (req: Request, res: Response) => {
+  const body = addAuditItemSchema.parse(req.body)
+  const item = await auditService.addItemToAudit(req.params.id, body, req.user!.userId)
+  sendCreated(res, item, 'Item added to audit')
 })

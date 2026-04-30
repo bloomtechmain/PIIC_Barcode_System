@@ -1,15 +1,19 @@
+import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
-  ArrowLeft, Calendar, Tag, FileText,
-  History, CheckCircle, ArrowUpFromLine, Scale, CreditCard, ChevronRight
+  ArrowLeft, Calendar, Tag, FileText, History, CheckCircle,
+  ArrowUpFromLine, Scale, CreditCard, ChevronRight, Pencil, X, Save, Clock
 } from 'lucide-react'
-import { getItem } from '../api/item.api'
+import { getItem, updateItem } from '../api/item.api'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
 import Badge from '../components/ui/Badge'
 import BarcodeDisplay from '../components/ui/BarcodeDisplay'
 import CustomerAvatar from '../components/ui/CustomerAvatar'
 import WeightBadge from '../components/ui/WeightBadge'
+import { useAuth } from '../context/AuthContext'
+
+const ITEM_TYPES = ['ring', 'chain', 'bracelet', 'earrings', 'necklace', 'bangle', 'pendant', 'other']
 
 const scanTypeLabel: Record<string, { label: string; color: string; dot: string }> = {
   CREATE: { label: 'Item Created',  color: 'text-navy-700 bg-navy-50 border-navy-200',          dot: 'bg-navy-400'    },
@@ -17,9 +21,26 @@ const scanTypeLabel: Record<string, { label: string; color: string; dot: string 
   VERIFY: { label: 'Manual Verify', color: 'text-gray-600 bg-gray-100 border-gray-200',         dot: 'bg-gray-400'    },
 }
 
+const fieldLabel: Record<string, string> = {
+  itemType:    'Item Type',
+  weight:      'Net Weight',
+  grossWeight: 'Gross Weight',
+  karatage:    'Karatage',
+  remarks:     'Remarks',
+}
+
 export default function ItemDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const qc = useQueryClient()
+  const { isAdmin, isSuperAdmin } = useAuth()
+  const canEdit = isAdmin || isSuperAdmin
+
+  const [editing, setEditing] = useState(false)
+  const [editError, setEditError] = useState('')
+  const [form, setForm] = useState({
+    itemType: '', weight: '', grossWeight: '', karatage: '', remarks: ''
+  })
 
   const { data: item, isLoading } = useQuery({
     queryKey: ['item', id],
@@ -27,13 +48,44 @@ export default function ItemDetail() {
     enabled: !!id
   })
 
+  const editMutation = useMutation({
+    mutationFn: () => updateItem(id!, {
+      itemType:    form.itemType    || undefined,
+      weight:      form.weight      ? parseFloat(form.weight)      : undefined,
+      grossWeight: form.grossWeight ? parseFloat(form.grossWeight) : null,
+      karatage:    form.karatage    ? parseInt(form.karatage, 10)  : null,
+      remarks:     form.remarks     || null,
+    }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['item', id] })
+      qc.invalidateQueries({ queryKey: ['items'] })
+      setEditing(false)
+      setEditError('')
+    },
+    onError: (err: unknown) => {
+      const msg = (err as { response?: { data?: { message?: string } } })
+        ?.response?.data?.message ?? 'Failed to update item'
+      setEditError(msg)
+    }
+  })
+
+  const openEdit = () => {
+    if (!item) return
+    setForm({
+      itemType:    item.itemType,
+      weight:      String(item.weight),
+      grossWeight: item.grossWeight ? String(item.grossWeight) : '',
+      karatage:    item.karatage    ? String(item.karatage)    : '',
+      remarks:     item.remarks     ?? '',
+    })
+    setEditError('')
+    setEditing(true)
+  }
+
   if (isLoading) return <LoadingSpinner />
   if (!item) return null
 
-  const barcodeLabel = item.customer
-    ? `${item.customer.name} · ${item.itemType}`
-    : item.itemType
-  const ticketNo = item.description?.match(/Ticket No:\s*(\S+)/)?.[1]
+  const barcodeLabel = item.customer ? `${item.customer.name} · ${item.itemType}` : item.itemType
 
   return (
     <div className="space-y-4">
@@ -61,6 +113,9 @@ export default function ItemDetail() {
             <div>
               <p className="text-white/50 text-xs font-medium uppercase tracking-widest mb-0.5">Item Detail</p>
               <h1 className="text-xl font-bold text-white capitalize">{item.itemType}</h1>
+              {item.ticketNo && (
+                <p className="text-white/60 text-xs font-mono mt-0.5">Ticket: {item.ticketNo}</p>
+              )}
             </div>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
@@ -68,9 +123,87 @@ export default function ItemDetail() {
               {item.barcode}
             </span>
             <Badge value={item.status} />
+            {canEdit && (
+              <button
+                onClick={openEdit}
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-white bg-white/15 border border-white/25 hover:bg-white/25 px-3 py-1.5 rounded-lg transition-all"
+              >
+                <Pencil size={12} /> Edit
+              </button>
+            )}
           </div>
         </div>
       </div>
+
+      {/* ── Edit form ─────────────────────────────────────────────────── */}
+      {editing && (
+        <div className="card p-6 border-2 border-navy-200">
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="font-semibold text-navy-700 flex items-center gap-2"><Pencil size={15} /> Edit Item</h2>
+            <button onClick={() => setEditing(false)} className="text-gray-400 hover:text-gray-600">
+              <X size={18} />
+            </button>
+          </div>
+
+          {editError && (
+            <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">{editError}</div>
+          )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Item Type */}
+            <div className="sm:col-span-2">
+              <label className="label">Item Type</label>
+              <div className="grid grid-cols-4 gap-2 mt-1">
+                {ITEM_TYPES.map(t => (
+                  <button key={t} type="button" onClick={() => setForm(p => ({ ...p, itemType: t }))}
+                    className={`py-2 px-1 rounded-xl text-xs font-semibold border transition-all capitalize ${
+                      form.itemType === t ? 'bg-navy-600 text-white border-navy-600' : 'bg-white text-gray-500 border-gray-200 hover:border-navy-300'
+                    }`}>{t}</button>
+                ))}
+              </div>
+            </div>
+
+            {/* Net Weight */}
+            <div>
+              <label className="label">Net Weight (g)</label>
+              <input className="input" type="number" step="0.001" min="0.001" placeholder="0.000"
+                value={form.weight} onChange={e => setForm(p => ({ ...p, weight: e.target.value }))} />
+            </div>
+
+            {/* Gross Weight */}
+            <div>
+              <label className="label">Gross Weight (g)</label>
+              <input className="input" type="number" step="0.001" min="0.001" placeholder="0.000"
+                value={form.grossWeight} onChange={e => setForm(p => ({ ...p, grossWeight: e.target.value }))} />
+            </div>
+
+            {/* Karatage */}
+            <div>
+              <label className="label">Karatage (K)</label>
+              <input className="input" type="number" min="1" max="24" placeholder="e.g. 22"
+                value={form.karatage} onChange={e => setForm(p => ({ ...p, karatage: e.target.value }))} />
+            </div>
+
+            {/* Remarks */}
+            <div>
+              <label className="label">Remarks</label>
+              <input className="input" placeholder="Any remarks…"
+                value={form.remarks} onChange={e => setForm(p => ({ ...p, remarks: e.target.value }))} />
+            </div>
+          </div>
+
+          <div className="flex gap-2 mt-5">
+            <button
+              onClick={() => editMutation.mutate()}
+              disabled={editMutation.isPending}
+              className="btn-primary gap-2 flex-1 justify-center"
+            >
+              <Save size={14} /> {editMutation.isPending ? 'Saving…' : 'Save Changes'}
+            </button>
+            <button onClick={() => setEditing(false)} className="btn-secondary flex-1 justify-center">Cancel</button>
+          </div>
+        </div>
+      )}
 
       {/* ── Barcode + Details ─────────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -82,7 +215,7 @@ export default function ItemDetail() {
           </div>
           <div className="flex-1 flex flex-col items-center justify-center px-6 pb-6 pt-4">
             <div className="w-full bg-gray-50 rounded-2xl border border-gray-100 flex flex-col items-center justify-center py-8 px-4">
-              <BarcodeDisplay value={item.barcode} showPrint label={barcodeLabel} large ticketNo={ticketNo} />
+              <BarcodeDisplay value={item.barcode} showPrint label={barcodeLabel} large ticketNo={item.ticketNo ?? undefined} />
             </div>
           </div>
         </div>
@@ -130,10 +263,34 @@ export default function ItemDetail() {
                   <Scale size={13} className="text-amber-600" />
                 </div>
                 <div>
-                  <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">Weight</p>
+                  <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">Net Weight</p>
                   <div className="mt-0.5"><WeightBadge weight={item.weight} size="sm" /></div>
                 </div>
               </div>
+
+              {item.grossWeight && (
+                <div className="bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 flex items-center gap-3">
+                  <div className="w-7 h-7 rounded-lg bg-amber-50 flex items-center justify-center flex-shrink-0">
+                    <Scale size={13} className="text-amber-500" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">Gross Weight</p>
+                    <p className="font-semibold text-gray-800 text-sm mt-0.5">{Number(item.grossWeight).toFixed(3)}g</p>
+                  </div>
+                </div>
+              )}
+
+              {item.karatage && (
+                <div className="bg-amber-50 border border-amber-100 rounded-xl px-4 py-3 flex items-center gap-3">
+                  <div className="w-7 h-7 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0">
+                    <span className="text-xs font-bold text-amber-600">K</span>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">Karatage</p>
+                    <p className="font-semibold text-amber-700 text-sm mt-0.5">{item.karatage}K</p>
+                  </div>
+                </div>
+              )}
 
               <div className="bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 flex items-center gap-3">
                 <div className="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
@@ -158,6 +315,18 @@ export default function ItemDetail() {
                   </p>
                 </div>
               </div>
+
+              {item.remarks && (
+                <div className="col-span-2 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 flex items-start gap-3">
+                  <div className="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <FileText size={13} className="text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">Remarks</p>
+                    <p className="font-medium text-gray-700 text-sm mt-0.5">{item.remarks}</p>
+                  </div>
+                </div>
+              )}
 
               {item.description && (
                 <div className="col-span-2 bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 flex items-start gap-3">
@@ -198,7 +367,43 @@ export default function ItemDetail() {
         </div>
       </div>
 
-      {/* ── Scan history — full width ─────────────────────────────────── */}
+      {/* ── Edit history ──────────────────────────────────────────────── */}
+      {(item.editLogs?.length ?? 0) > 0 && (
+        <div className="card overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-2">
+            <Clock size={16} className="text-navy-500" />
+            <h2 className="font-semibold text-navy-700">Edit History</h2>
+            <span className="ml-auto text-xs text-gray-400 bg-gray-100 px-2.5 py-0.5 rounded-full font-medium">
+              {item.editLogs!.length} change{item.editLogs!.length !== 1 ? 's' : ''}
+            </span>
+          </div>
+          <div className="divide-y divide-gray-50">
+            {item.editLogs!.map(log => (
+              <div key={log.id} className="flex items-start gap-4 px-6 py-3.5 hover:bg-gray-50/60 transition-colors">
+                <div className="w-7 h-7 rounded-lg bg-navy-50 border border-navy-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <Pencil size={12} className="text-navy-500" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-700">
+                    <span className="font-semibold text-navy-700">{fieldLabel[log.field] ?? log.field}</span> changed
+                    {log.editedBy && <span className="text-gray-400 font-normal"> by {log.editedBy.name}</span>}
+                  </p>
+                  <div className="flex items-center gap-2 mt-1 flex-wrap">
+                    <span className="text-xs bg-red-50 text-red-600 border border-red-100 px-2 py-0.5 rounded line-through">{log.oldValue || '—'}</span>
+                    <span className="text-gray-300 text-xs">→</span>
+                    <span className="text-xs bg-emerald-50 text-emerald-700 border border-emerald-100 px-2 py-0.5 rounded font-medium">{log.newValue || '—'}</span>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-400 whitespace-nowrap flex-shrink-0 pt-0.5">
+                  {new Date(log.editedAt).toLocaleString('en-US', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Scan history ──────────────────────────────────────────────── */}
       <div className="card overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-2">
           <History size={16} className="text-navy-500" />
@@ -207,7 +412,6 @@ export default function ItemDetail() {
             {item.barcodeLogs?.length ?? 0} events
           </span>
         </div>
-
         {!item.barcodeLogs?.length ? (
           <div className="px-6 py-12 text-center">
             <History size={32} className="text-gray-200 mx-auto mb-2" />
@@ -216,37 +420,23 @@ export default function ItemDetail() {
         ) : (
           <div className="divide-y divide-gray-50">
             {item.barcodeLogs.map((log, i) => {
-              const meta = scanTypeLabel[log.scanType] ?? {
-                label: log.scanType,
-                color: 'text-gray-600 bg-gray-100 border-gray-200',
-                dot: 'bg-gray-400'
-              }
+              const meta = scanTypeLabel[log.scanType] ?? { label: log.scanType, color: 'text-gray-600 bg-gray-100 border-gray-200', dot: 'bg-gray-400' }
               const isLast = i === item.barcodeLogs!.length - 1
-
               return (
                 <div key={log.id} className="flex items-start gap-5 px-6 py-4 hover:bg-gray-50/60 transition-colors">
-                  {/* Timeline */}
                   <div className="flex flex-col items-center flex-shrink-0 pt-1.5">
                     <div className={`w-3 h-3 rounded-full flex-shrink-0 ring-4 ring-white ${meta.dot}`} />
                     {!isLast && <div className="w-px bg-gray-200 mt-2" style={{ height: 28 }} />}
                   </div>
-
-                  {/* Info */}
                   <div className="flex-1 flex items-start justify-between gap-4 min-w-0">
                     <div>
                       <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full border ${meta.color}`}>
-                        <CheckCircle size={11} />
-                        {meta.label}
+                        <CheckCircle size={11} />{meta.label}
                       </span>
-                      {log.scannedBy && (
-                        <p className="text-xs text-gray-400 mt-1.5 ml-0.5">by {log.scannedBy.name}</p>
-                      )}
+                      {log.scannedBy && <p className="text-xs text-gray-400 mt-1.5 ml-0.5">by {log.scannedBy.name}</p>}
                     </div>
                     <p className="text-xs text-gray-400 whitespace-nowrap pt-1 flex-shrink-0">
-                      {new Date(log.scannedAt).toLocaleString('en-US', {
-                        day: 'numeric', month: 'short', year: 'numeric',
-                        hour: '2-digit', minute: '2-digit'
-                      })}
+                      {new Date(log.scannedAt).toLocaleString('en-US', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                     </p>
                   </div>
                 </div>
@@ -255,7 +445,6 @@ export default function ItemDetail() {
           </div>
         )}
       </div>
-
     </div>
   )
 }

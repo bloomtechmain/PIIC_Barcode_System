@@ -32,6 +32,11 @@ enum ScanType {
   VERIFY
 }
 
+enum AuditType {
+  STANDARD
+  INITIAL
+}
+
 // ─── Models ───────────────────────────────────────────────────────────────────
 
 model User {
@@ -48,8 +53,28 @@ model User {
   barcodeLogs     BarcodeLog[]
   itemCorrections ItemCorrection[]
   activityLogs    ActivityLog[]
+  itemEditLogs    ItemEditLog[]
 
   @@map("users")
+}
+
+model Branch {
+  id        String           @id @default(cuid())
+  name      String           @unique
+  customers CustomerBranch[]
+  createdAt DateTime         @default(now())
+
+  @@map("branches")
+}
+
+model CustomerBranch {
+  customerId String
+  branchId   String
+  customer   Customer @relation(fields: [customerId], references: [id])
+  branch     Branch   @relation(fields: [branchId], references: [id])
+
+  @@id([customerId, branchId])
+  @@map("customer_branches")
 }
 
 model Customer {
@@ -62,7 +87,8 @@ model Customer {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  items Item[]
+  items    Item[]
+  branches CustomerBranch[]
 
   @@index([nic])
   @@map("customers")
@@ -73,7 +99,11 @@ model Item {
   barcode     String     @unique
   customerId  String
   itemType    String
-  weight      Decimal    @db.Decimal(8, 3)
+  weight      Decimal    @db.Decimal(8, 3)   // net weight
+  grossWeight Decimal?   @db.Decimal(8, 3)
+  karatage    Int?
+  ticketNo    String?
+  remarks     String?
   description String?
   pawnDate    DateTime
   status      ItemStatus @default(ACTIVE)
@@ -85,12 +115,30 @@ model Item {
   auditItems      AuditItem[]
   barcodeLogs     BarcodeLog[]
   itemCorrections ItemCorrection[]
+  editLogs        ItemEditLog[]
 
   @@index([barcode])
   @@index([customerId])
   @@index([status])
   @@index([customerId, status])
+  @@index([ticketNo])
   @@map("items")
+}
+
+model ItemEditLog {
+  id          String   @id @default(cuid())
+  itemId      String
+  editedById  String
+  field       String
+  oldValue    String
+  newValue    String
+  editedAt    DateTime @default(now())
+
+  item      Item @relation(fields: [itemId], references: [id])
+  editedBy  User @relation(fields: [editedById], references: [id])
+
+  @@index([itemId])
+  @@map("item_edit_logs")
 }
 
 model Release {
@@ -111,11 +159,15 @@ model Release {
 
 model Audit {
   id               String    @id @default(cuid())
+  auditType        AuditType @default(STANDARD)
   createdAt        DateTime  @default(now())
   createdById      String
   totalItemsAtTime Int
   notes            String?
   finalizedAt      DateTime? // NULL = audit still in progress
+  filterDateFrom   DateTime?
+  filterDateTo     DateTime?
+  filterBranchId   String?
 
   createdBy      User             @relation(fields: [createdById], references: [id])
   auditItems     AuditItem[]

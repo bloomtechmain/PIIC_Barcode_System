@@ -1,5 +1,6 @@
 export type Role = 'ADMIN' | 'STAFF' | 'SUPER_ADMIN'
 export type ItemStatus = 'ACTIVE' | 'RELEASED'
+export type AuditType = 'STANDARD' | 'INITIAL'
 export type AuditItemStatus = 'FOUND' | 'MISSING' | 'UNKNOWN'
 export type ScanType = 'AUDIT' | 'CREATE' | 'VERIFY'
 
@@ -22,6 +23,7 @@ export interface Customer {
   updatedAt: string
   _count?: { items: number }
   items?: Item[]
+  branches?: { branch: { id: string; name: string } }[]
 }
 
 export interface ItemCorrection {
@@ -37,12 +39,27 @@ export interface ItemCorrection {
   audit?: { id: string; createdAt: string }
 }
 
+export interface ItemEditLog {
+  id: string
+  itemId: string
+  editedById: string
+  field: string
+  oldValue: string
+  newValue: string
+  editedAt: string
+  editedBy: { id: string; name: string }
+}
+
 export interface Item {
   id: string
   barcode: string
   customerId: string
   itemType: string
   weight: number | string
+  grossWeight?: number | string | null
+  karatage?: number | null
+  ticketNo?: string | null
+  remarks?: string | null
   description?: string
   pawnDate: string
   status: ItemStatus
@@ -52,6 +69,7 @@ export interface Item {
   release?: Release
   barcodeLogs?: BarcodeLog[]
   itemCorrections?: ItemCorrection[]
+  editLogs?: ItemEditLog[]
 }
 
 export interface Release {
@@ -67,11 +85,15 @@ export interface Release {
 
 export interface Audit {
   id: string
+  auditType: AuditType
   createdAt: string
   createdById: string
   totalItemsAtTime: number
   notes?: string
   finalizedAt?: string | null
+  filterDateFrom?: string | null
+  filterDateTo?: string | null
+  filterBranchId?: string | null
   createdBy?: { id: string; name: string }
   _count?: { auditItems: number }
   auditItems?: AuditItem[]
@@ -123,6 +145,14 @@ export interface ActivityLog {
   ip: string | null
   createdAt: string
   user: { id: string; name: string; email: string; role: Role } | null
+}
+
+export interface Branch {
+  id: string
+  name: string
+  createdAt: string
+  _count?: { customers: number }
+  customers?: { customer: Customer }[]
 }
 
 export interface ApiResponse<T> {

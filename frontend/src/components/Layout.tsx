@@ -2,7 +2,7 @@ import { Outlet } from 'react-router-dom'
 import { NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Users, Package, ArrowUpFromLine,
-  ClipboardCheck, BarChart3, LogOut, Gem, ChevronRight, Activity
+  ClipboardCheck, BarChart3, LogOut, Gem, ChevronRight, Activity, GitBranch
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
@@ -15,7 +15,8 @@ const navItems = [
 ]
 
 const adminItems = [
-  { to: '/reports', icon: BarChart3, label: 'Reports' },
+  { to: '/reports',  icon: BarChart3,   label: 'Reports'  },
+  { to: '/branches', icon: GitBranch,   label: 'Branches' },
 ]
 
 const superAdminItems = [

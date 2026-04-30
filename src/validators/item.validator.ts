@@ -1,20 +1,24 @@
 import { z } from 'zod'
 
 export const createItemSchema = z.object({
-  barcode: z.string().min(1).optional(), // omit to auto-generate
-  customerId: z.string().cuid('Invalid customer ID'),
-  itemType: z.string().min(1, 'Item type is required'),
-  weight: z
-    .number({ invalid_type_error: 'Weight must be a number' })
-    .positive('Weight must be positive')
-    .multipleOf(0.001, 'Weight supports up to 3 decimal places'),
+  barcode:     z.string().min(1).optional(),
+  customerId:  z.string().cuid('Invalid customer ID'),
+  itemType:    z.string().min(1, 'Item type is required'),
+  weight:      z.number({ invalid_type_error: 'Weight must be a number' }).positive('Weight must be positive').multipleOf(0.001, 'Weight supports up to 3 decimal places'),
+  grossWeight: z.number().positive().multipleOf(0.001).optional(),
+  karatage:    z.number().int().positive().optional(),
+  ticketNo:    z.string().optional(),
+  remarks:     z.string().optional(),
   description: z.string().optional(),
-  pawnDate: z.coerce.date()
+  pawnDate:    z.coerce.date()
 })
 
 export const updateItemSchema = z.object({
-  itemType: z.string().min(1).optional(),
-  weight: z.number().positive().multipleOf(0.001).optional(),
+  itemType:    z.string().min(1).optional(),
+  weight:      z.number().positive().multipleOf(0.001).optional(),
+  grossWeight: z.number().positive().multipleOf(0.001).optional().nullable(),
+  karatage:    z.number().int().positive().optional().nullable(),
+  remarks:     z.string().optional().nullable(),
   description: z.string().optional()
   // barcode and customerId intentionally excluded — immutable / not updatable
 })

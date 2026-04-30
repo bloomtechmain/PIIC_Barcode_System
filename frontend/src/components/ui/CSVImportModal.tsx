@@ -25,6 +25,7 @@ export default function CSVImportModal({ open, onClose }: Props) {
       setResult(data)
       qc.invalidateQueries({ queryKey: ['customers'] })
       qc.invalidateQueries({ queryKey: ['items'] })
+      qc.invalidateQueries({ queryKey: ['branches'] })
     }
   })
 

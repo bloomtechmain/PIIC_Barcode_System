@@ -12,6 +12,7 @@ import auditRoutes from './routes/audit.routes'
 import reportRoutes from './routes/report.routes'
 import importRoutes from './routes/import.routes'
 import activityLogRoutes from './routes/activity-log.routes'
+import branchRoutes from './routes/branch.routes'
 import { errorHandler } from './middleware/error'
 
 const app = express()
@@ -41,6 +42,7 @@ app.use('/api/audits', auditRoutes)
 app.use('/api/reports', reportRoutes)
 app.use('/api/import', importRoutes)
 app.use('/api/activity-logs', activityLogRoutes)
+app.use('/api/branches', branchRoutes)
 
 // ─── Static Frontend (Production) ─────────────────────────────────────────────
 if (process.env.NODE_ENV === 'production') {

@@ -16,6 +16,10 @@ const ITEM_DETAIL_INCLUDE = {
     orderBy: { scannedAt: 'desc' as const },
     take: 20,
     include: { scannedBy: { select: { id: true, name: true } } }
+  },
+  editLogs: {
+    orderBy: { editedAt: 'desc' as const },
+    include: { editedBy: { select: { id: true, name: true } } }
   }
 }
 
@@ -92,11 +96,15 @@ export const create = async (data: CreateItemInput, createdById: string) => {
     const item = await tx.item.create({
       data: {
         barcode,
-        customerId: data.customerId,
-        itemType: data.itemType,
-        weight: data.weight,
+        customerId:  data.customerId,
+        itemType:    data.itemType,
+        weight:      data.weight,
+        grossWeight: data.grossWeight,
+        karatage:    data.karatage,
+        ticketNo:    data.ticketNo,
+        remarks:     data.remarks,
         description: data.description,
-        pawnDate: data.pawnDate
+        pawnDate:    data.pawnDate
       },
       include: {
         customer: { select: { id: true, name: true, nic: true } }
@@ -117,14 +125,30 @@ export const create = async (data: CreateItemInput, createdById: string) => {
 }
 
 export const update = async (id: string, data: UpdateItemInput, userId: string) => {
-  await findById(id) // ensure exists
+  const existing = await findById(id)
+
+  // Build edit log entries for changed fields
+  const trackFields = ['itemType', 'weight', 'grossWeight', 'karatage', 'remarks'] as const
+  const editEntries = trackFields
+    .filter(f => data[f] !== undefined && String(data[f]) !== String((existing as Record<string, unknown>)[f] ?? ''))
+    .map(f => ({
+      itemId: id,
+      editedById: userId,
+      field: f,
+      oldValue: String((existing as Record<string, unknown>)[f] ?? ''),
+      newValue: String(data[f])
+    }))
+
   const item = await prisma.item.update({
     where: { id },
     data,
-    include: {
-      customer: { select: { id: true, name: true, nic: true } }
-    }
+    include: { customer: { select: { id: true, name: true, nic: true } } }
   })
+
+  if (editEntries.length > 0) {
+    await prisma.itemEditLog.createMany({ data: editEntries })
+  }
+
   await logActivity({ userId, action: 'ITEM_UPDATE', entity: 'Item', entityId: id, details: data as Record<string, unknown> })
   return item
 }

@@ -12,8 +12,10 @@ import ItemDetail from './pages/ItemDetail'
 import Releases from './pages/Releases'
 import Audits from './pages/Audits'
 import AuditDetail from './pages/AuditDetail'
+import InitialAuditDetail from './pages/InitialAuditDetail'
 import Reports from './pages/Reports'
 import ActivityLogs from './pages/ActivityLogs'
+import Branches from './pages/Branches'
 
 export default function App() {
   return (
@@ -31,9 +33,11 @@ export default function App() {
               <Route path="/items/:id" element={<ItemDetail />} />
               <Route path="/releases" element={<Releases />} />
               <Route path="/audits" element={<Audits />} />
+              <Route path="/audits/initial/:id" element={<InitialAuditDetail />} />
               <Route path="/audits/:id" element={<AuditDetail />} />
               <Route path="/reports" element={<Reports />} />
               <Route path="/activity-logs" element={<ActivityLogs />} />
+              <Route path="/branches" element={<Branches />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>
           </Route>

@@ -1,8 +1,30 @@
-import { AuditItemStatus, ItemStatus, ScanType } from '@prisma/client'
+import { AuditItemStatus, AuditType, ItemStatus, Prisma, ScanType } from '@prisma/client'
 import { prisma } from '../lib/prisma'
 import { AppError } from '../middleware/error'
-import { CreateAuditInput, UpdateAuditItemInput, BulkReleaseInput } from '../validators/audit.validator'
+import { generateBarcode } from '../utils/barcode-generator'
+import { AddAuditItemInput, CreateAuditInput, CreateInitialAuditInput, UpdateAuditItemInput, BulkReleaseInput } from '../validators/audit.validator'
 import { logActivity } from './activity-log.service'
+
+// ─── Shared helper: build item WHERE from date/branch filters ─────────────────
+function buildFilteredItemWhere(audit: {
+  filterDateFrom: Date | null
+  filterDateTo:   Date | null
+  filterBranchId: string | null
+}): Prisma.ItemWhereInput {
+  const where: Prisma.ItemWhereInput = { status: ItemStatus.ACTIVE }
+
+  if (audit.filterDateFrom || audit.filterDateTo) {
+    where.pawnDate = {}
+    if (audit.filterDateFrom) (where.pawnDate as Prisma.DateTimeFilter).gte = audit.filterDateFrom
+    if (audit.filterDateTo)   (where.pawnDate as Prisma.DateTimeFilter).lte = audit.filterDateTo
+  }
+
+  if (audit.filterBranchId) {
+    where.customer = { branches: { some: { branchId: audit.filterBranchId } } }
+  }
+
+  return where
+}
 
 export const create = async (data: CreateAuditInput, createdById: string) => {
   const totalItemsAtTime = await prisma.item.count({
@@ -21,6 +43,126 @@ export const create = async (data: CreateAuditInput, createdById: string) => {
   })
   await logActivity({ userId: createdById, action: 'AUDIT_CREATE', entity: 'Audit', entityId: audit.id, details: { totalItemsAtTime } })
   return audit
+}
+
+export const createInitial = async (data: CreateInitialAuditInput, createdById: string) => {
+  const filterDateFrom = data.filterDateFrom ? new Date(data.filterDateFrom) : null
+  const filterDateTo   = data.filterDateTo   ? new Date(data.filterDateTo)   : null
+  const filterBranchId = data.filterBranchId ?? null
+
+  const totalItemsAtTime = await prisma.item.count({
+    where: buildFilteredItemWhere({ filterDateFrom, filterDateTo, filterBranchId })
+  })
+
+  const audit = await prisma.audit.create({
+    data: {
+      auditType: AuditType.INITIAL,
+      createdById,
+      totalItemsAtTime,
+      notes:         data.notes,
+      filterDateFrom,
+      filterDateTo,
+      filterBranchId,
+    },
+    include: { createdBy: { select: { id: true, name: true } } }
+  })
+
+  await logActivity({ userId: createdById, action: 'AUDIT_CREATE', entity: 'Audit', entityId: audit.id, details: { auditType: 'INITIAL', totalItemsAtTime } })
+  return audit
+}
+
+export const getInitialAuditItems = async (auditId: string) => {
+  const audit = await prisma.audit.findUnique({ where: { id: auditId } })
+  if (!audit) throw new AppError('Audit not found', 404)
+  if (audit.auditType !== AuditType.INITIAL) throw new AppError('This is not an initial audit', 400)
+
+  const items = await prisma.item.findMany({
+    where: buildFilteredItemWhere(audit),
+    orderBy: [{ ticketNo: 'asc' }, { createdAt: 'asc' }],
+    include: {
+      customer: { select: { id: true, name: true, nic: true } },
+      editLogs: {
+        orderBy: { editedAt: 'desc' },
+        include: { editedBy: { select: { id: true, name: true } } }
+      }
+    }
+  })
+
+  // Resolve branch name if filter is set
+  let filterBranch: { id: string; name: string } | null = null
+  if (audit.filterBranchId) {
+    filterBranch = await prisma.branch.findUnique({
+      where: { id: audit.filterBranchId },
+      select: { id: true, name: true }
+    })
+  }
+
+  return { items, filterBranch }
+}
+
+export const addItemToAudit = async (
+  auditId: string,
+  data: AddAuditItemInput,
+  userId: string
+) => {
+  const audit = await prisma.audit.findUnique({ where: { id: auditId } })
+  if (!audit) throw new AppError('Audit not found', 404)
+  if (audit.auditType !== AuditType.INITIAL) throw new AppError('Not an initial audit', 400)
+  if (audit.finalizedAt) throw new AppError('Audit is already finalized', 409)
+
+  return prisma.$transaction(async tx => {
+    // Generate a unique barcode
+    let barcode: string
+    do { barcode = generateBarcode() }
+    while (await tx.item.findUnique({ where: { barcode } }))
+
+    const item = await tx.item.create({
+      data: {
+        barcode,
+        customerId:  data.customerId,
+        ticketNo:    data.ticketNo,
+        itemType:    data.itemType,
+        weight:      data.weight,
+        grossWeight: data.grossWeight ?? null,
+        karatage:    data.karatage    ?? null,
+        remarks:     data.remarks     ?? null,
+        pawnDate:    new Date(data.pawnDate),
+      },
+      include: {
+        customer: { select: { id: true, name: true, nic: true } },
+        editLogs: {
+          orderBy: { editedAt: 'desc' as const },
+          include: { editedBy: { select: { id: true, name: true } } }
+        }
+      }
+    })
+
+    // Log barcode creation
+    await tx.barcodeLog.create({
+      data: { itemId: item.id, scannedById: userId, scanType: ScanType.CREATE }
+    })
+
+    // Mark as audit-added so reports can identify it
+    await tx.itemEditLog.create({
+      data: {
+        itemId:     item.id,
+        editedById: userId,
+        field:      'AUDIT_ADDED',
+        oldValue:   '',
+        newValue:   auditId,
+      }
+    })
+
+    await logActivity({
+      userId,
+      action:   'AUDIT_ITEM_ADD',
+      entity:   'Item',
+      entityId: item.id,
+      details:  { auditId, barcode: item.barcode, ticketNo: data.ticketNo, itemType: data.itemType }
+    })
+
+    return item
+  })
 }
 
 export const scanBarcode = async (
@@ -89,6 +231,14 @@ export const finalizeAudit = async (auditId: string, userId: string) => {
   })
   if (!audit) throw new AppError('Audit not found', 404)
   if (audit.finalizedAt) throw new AppError('Audit has already been finalized', 409)
+
+  // Initial audits have no barcode scanning — just finalize directly
+  if (audit.auditType === AuditType.INITIAL) {
+    const finalizedAt = new Date()
+    await prisma.audit.update({ where: { id: auditId }, data: { finalizedAt } })
+    await logActivity({ userId, action: 'AUDIT_FINALIZE', entity: 'Audit', entityId: auditId, details: { auditType: 'INITIAL', totalItemsAtTime: audit.totalItemsAtTime } })
+    return { auditId, auditType: 'INITIAL', totalItemsAtTime: audit.totalItemsAtTime, finalizedAt }
+  }
 
   // All currently ACTIVE items
   const activeItems = await prisma.item.findMany({
@@ -188,6 +338,10 @@ export const updateAuditItem = async (
   data: UpdateAuditItemInput,
   userId: string
 ) => {
+  const audit = await prisma.audit.findUnique({ where: { id: auditId }, select: { finalizedAt: true } })
+  if (!audit) throw new AppError('Audit not found', 404)
+  if (audit.finalizedAt) throw new AppError('Audit is finalized and cannot be edited', 409)
+
   const auditItem = await prisma.auditItem.findUnique({
     where: { id: auditItemId },
     include: { item: true }

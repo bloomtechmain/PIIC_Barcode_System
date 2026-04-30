@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
-import { Plus, Search, Users, Phone, Mail, ChevronRight, UserPlus, Upload } from 'lucide-react'
+import { Plus, Search, Users, Phone, Mail, ChevronRight, UserPlus, Upload, GitBranch } from 'lucide-react'
 import { getCustomers, createCustomer } from '../api/customer.api'
+import { getBranches } from '../api/branch.api'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
 import CustomerAvatar from '../components/ui/CustomerAvatar'
 import Drawer from '../components/ui/Drawer'
@@ -11,15 +12,21 @@ import CSVImportModal from '../components/ui/CSVImportModal'
 export default function Customers() {
   const navigate = useNavigate()
   const qc = useQueryClient()
-  const [search, setSearch]       = useState('')
+  const [search, setSearch]         = useState('')
+  const [branchFilter, setBranchFilter] = useState<string>('all')
   const [showDrawer, setShowDrawer] = useState(false)
   const [showImport, setShowImport] = useState(false)
-  const [form, setForm]           = useState({ name: '', nic: '', phone: '', email: '', address: '' })
-  const [formError, setFormError] = useState('')
+  const [form, setForm]             = useState({ name: '', nic: '', phone: '', email: '', address: '' })
+  const [formError, setFormError]   = useState('')
 
   const { data: customers = [], isLoading } = useQuery({
     queryKey: ['customers'],
     queryFn: getCustomers
+  })
+
+  const { data: branches = [] } = useQuery({
+    queryKey: ['branches'],
+    queryFn: getBranches
   })
 
   const mutation = useMutation({
@@ -41,10 +48,15 @@ export default function Customers() {
     (e: React.ChangeEvent<HTMLInputElement>) =>
       setForm(p => ({ ...p, [key]: e.target.value }))
 
-  const filtered = customers.filter(c =>
-    c.name.toLowerCase().includes(search.toLowerCase()) ||
-    c.nic.toLowerCase().includes(search.toLowerCase())
-  )
+  const filtered = customers.filter(c => {
+    const matchesSearch = c.name.toLowerCase().includes(search.toLowerCase()) ||
+      c.nic.toLowerCase().includes(search.toLowerCase())
+    const matchesBranch = branchFilter === 'all' ||
+      (branchFilter === 'none'
+        ? !c.branches?.length
+        : c.branches?.some(b => b.branch.id === branchFilter))
+    return matchesSearch && matchesBranch
+  })
 
   const openDrawer = () => {
     setFormError('')
@@ -87,6 +99,31 @@ export default function Customers() {
           onChange={e => setSearch(e.target.value)}
         />
       </div>
+
+      {/* ── Branch filter pills ──────────────────────────────────────── */}
+      {branches.length > 0 && (
+        <div className="flex items-center gap-2 flex-wrap">
+          <GitBranch size={13} className="text-gray-400 flex-shrink-0" />
+          {[{ id: 'all', name: 'All Branches' }, ...branches].map(b => (
+            <button
+              key={b.id}
+              onClick={() => setBranchFilter(b.id)}
+              className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
+                branchFilter === b.id
+                  ? 'bg-gradient-to-r from-navy-600 to-magenta-500 text-white shadow-sm'
+                  : 'bg-white border border-gray-200 text-gray-500 hover:border-navy-300 hover:text-navy-600'
+              }`}
+            >
+              {b.name}
+              {b.id !== 'all' && (
+                <span className={`ml-1.5 ${branchFilter === b.id ? 'text-white/70' : 'text-gray-400'}`}>
+                  {(b as typeof branches[0])._count?.customers ?? ''}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* ── Customer grid ───────────────────────────────────────────── */}
       {filtered.length === 0 ? (
@@ -151,6 +188,17 @@ export default function Customers() {
                       <span className="text-xs text-gray-300 italic">No contact info</span>
                     )}
                   </div>
+
+                  {/* Branches */}
+                  {c.branches && c.branches.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      {c.branches.map(({ branch }) => (
+                        <span key={branch.id} className="inline-flex items-center gap-1 text-[10px] font-medium text-navy-600 bg-navy-50 border border-navy-100 px-2 py-0.5 rounded-full">
+                          <GitBranch size={9} /> {branch.name}
+                        </span>
+                      ))}
+                    </div>
+                  )}
 
                   {/* Footer */}
                   <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">

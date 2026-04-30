@@ -35,7 +35,14 @@ export const createItem = async (data: {
 
 export const updateItem = async (
   id: string,
-  data: { itemType?: string; weight?: number; description?: string }
+  data: {
+    itemType?:    string
+    weight?:      number
+    grossWeight?: number | null
+    karatage?:    number | null
+    remarks?:     string | null
+    description?: string
+  }
 ) => {
   const res = await api.put<ApiResponse<Item>>(`/items/${id}`, data)
   return res.data.data

@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowLeft, Package, Phone, Mail, MapPin, CreditCard, Calendar, Scale, ChevronRight, Users } from 'lucide-react'
+import { ArrowLeft, Package, Phone, Mail, MapPin, CreditCard, Calendar, Scale, ChevronRight, Users, GitBranch } from 'lucide-react'
 import { getCustomer } from '../api/customer.api'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
 import Badge from '../components/ui/Badge'
@@ -96,6 +96,11 @@ export default function CustomerDetail() {
                   <Mail size={11} /> {customer.email}
                 </span>
               )}
+              {customer.branches?.map(({ branch }) => (
+                <span key={branch.id} className="inline-flex items-center gap-1.5 text-xs text-white/80 bg-white/10 border border-white/15 px-2.5 py-1 rounded-lg">
+                  <GitBranch size={11} /> {branch.name}
+                </span>
+              ))}
             </div>
           </div>
 

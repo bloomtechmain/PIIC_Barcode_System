@@ -7,7 +7,8 @@ export const findAll = async () => {
   return prisma.customer.findMany({
     orderBy: { createdAt: 'desc' },
     include: {
-      _count: { select: { items: true } }
+      _count: { select: { items: true } },
+      branches: { include: { branch: true } }
     }
   })
 }
@@ -19,7 +20,8 @@ export const findById = async (id: string) => {
       items: {
         orderBy: { pawnDate: 'desc' },
         include: { release: true }
-      }
+      },
+      branches: { include: { branch: true } }
     }
   })
   if (!customer) throw new AppError('Customer not found', 404)

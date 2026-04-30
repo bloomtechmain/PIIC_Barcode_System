@@ -33,9 +33,10 @@ function latestCorrection(corrections: ItemCorrection[] | undefined, field: stri
 interface ExpandedPanelProps {
   ai: AuditItem
   auditId: string
+  isFinalized: boolean
 }
 
-function ExpandedPanel({ ai, auditId }: ExpandedPanelProps) {
+function ExpandedPanel({ ai, auditId, isFinalized }: ExpandedPanelProps) {
   const qc = useQueryClient()
 
   // All corrections for this item (from item.itemCorrections — full history across audits)
@@ -114,7 +115,7 @@ function ExpandedPanel({ ai, auditId }: ExpandedPanelProps) {
             value={remarks}
             onChange={e => setRemarks(e.target.value)}
             onBlur={saveRemarks}
-            disabled={remarksMutation.isPending}
+            disabled={remarksMutation.isPending || isFinalized}
           />
           {remarksSaved && (
             <span className="text-xs text-green-600 self-center whitespace-nowrap">Saved</span>
@@ -129,7 +130,7 @@ function ExpandedPanel({ ai, auditId }: ExpandedPanelProps) {
             <label className="text-xs font-semibold text-navy-600 uppercase tracking-wide">
               Item Values
             </label>
-            {!editing && (
+            {!editing && !isFinalized && (
               <button className="btn-ghost text-xs text-magenta-600 gap-1" onClick={openEdit}>
                 <Pencil size={12} /> Edit
               </button>
@@ -576,7 +577,7 @@ export default function AuditDetail() {
 
                   {/* Expanded panel */}
                   {isExpanded && (
-                    <ExpandedPanel ai={ai} auditId={id!} />
+                    <ExpandedPanel ai={ai} auditId={id!} isFinalized={isFinalized} />
                   )}
                 </div>
               )

@@ -111,13 +111,17 @@ export async function importFromBuffer(
   const colMap   = buildColMap(rows[0] as unknown[])
   const dataRows = rows.slice(1)
 
+  let lastBranch = ''
 
   for (let i = 0; i < dataRows.length; i++) {
     const row    = dataRows[i] as unknown[]
     const rowNum = i + 2 // 1-indexed, skipping header
 
     // ── Extract columns by header name ────────────────────────────────────────
-    const branch          = String(col(row, colMap, 'branch name')          ?? '').trim()
+    const rawBranch = (String(col(row, colMap, 'branch name') ?? '').trim()
+                    || String(col(row, colMap, 'branch')      ?? '').trim())
+    if (rawBranch) lastBranch = rawBranch
+    const branch = lastBranch
     const issuedDateRaw   = col(row, colMap, 'issued date')
     const customerName    = String(col(row, colMap, 'customer name')         ?? '').trim()
     const nicRaw          = col(row, colMap, 'nic')
@@ -179,6 +183,20 @@ export async function importFromBuffer(
       result.customersCreated++
     }
 
+    // ── Find or create branch and link customer ───────────────────────────────
+    if (branch) {
+      const branchRecord = await prisma.branch.upsert({
+        where: { name: branch },
+        update: {},
+        create: { name: branch }
+      })
+      await prisma.customerBranch.upsert({
+        where: { customerId_branchId: { customerId: customer.id, branchId: branchRecord.id } },
+        update: {},
+        create: { customerId: customer.id, branchId: branchRecord.id }
+      })
+    }
+
     // ── Generate a unique random barcode ─────────────────────────────────────
     let barcode: string
     do { barcode = generateBarcode() }
@@ -202,6 +220,9 @@ export async function importFromBuffer(
     // ── Create item ───────────────────────────────────────────────────────────
     const itemType = parseItemType(itemDescription)
 
+    const grossWeightNum = parseFloat(grossWeight.replace(/,/g, ''))
+    const karatageNum    = parseInt(karatage, 10)
+
     await prisma.$transaction(async tx => {
       const item = await tx.item.create({
         data: {
@@ -209,6 +230,9 @@ export async function importFromBuffer(
           customerId:  customer!.id,
           itemType,
           weight:      netWeight,
+          grossWeight: !isNaN(grossWeightNum) && grossWeightNum > 0 ? grossWeightNum : undefined,
+          karatage:    !isNaN(karatageNum)    && karatageNum > 0    ? karatageNum    : undefined,
+          ticketNo:    ticketNo || undefined,
           description,
           pawnDate
         }
