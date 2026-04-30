@@ -1,0 +1,1251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Pearl Isle Capital — Pawn Manager User Guide</title>
+<style>
+  /* ── Reset & Base ─────────────────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 10pt; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: #1e1b4b;
+    background: #fff;
+    line-height: 1.55;
+  }
+
+  /* ── Print Setup ──────────────────────────────────────────────────────── */
+  @page { size: A4; margin: 14mm 16mm 14mm 16mm; }
+  @media print {
+    .page-break { page-break-before: always; }
+    .no-break   { page-break-inside: avoid; }
+  }
+
+  /* ── Layout ───────────────────────────────────────────────────────────── */
+  .page     { max-width: 180mm; margin: 0 auto; padding: 10mm 0; }
+  .section  { margin-bottom: 9mm; }
+
+  /* ── Typography ───────────────────────────────────────────────────────── */
+  h1 { font-size: 22pt; font-weight: 800; color: #1e1b4b; }
+  h2 { font-size: 13pt; font-weight: 700; color: #fff;    margin-bottom: 5mm; }
+  h3 { font-size: 10.5pt; font-weight: 700; color: #1e1b4b; margin-bottom: 2.5mm; }
+  h4 { font-size: 9.5pt;  font-weight: 600; color: #312e81; margin-bottom: 1.5mm; }
+  p  { font-size: 9pt; color: #374151; margin-bottom: 2mm; }
+  ul, ol { font-size: 9pt; color: #374151; padding-left: 5mm; margin-bottom: 2mm; }
+  li { margin-bottom: 1mm; }
+  strong { color: #1e1b4b; }
+  code {
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 8pt;
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    border-radius: 3px;
+    padding: 0 2.5px;
+    color: #7c3aed;
+  }
+
+  /* ── Cover Page ───────────────────────────────────────────────────────── */
+  .cover {
+    min-height: 250mm;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background: linear-gradient(160deg, #1e1b4b 0%, #312e81 55%, #7c3aed 100%);
+    border-radius: 6mm;
+    color: #fff;
+    padding: 18mm 12mm;
+  }
+  .cover-logo {
+    width: 18mm; height: 18mm;
+    background: rgba(255,255,255,0.15);
+    border: 2px solid rgba(255,255,255,0.35);
+    border-radius: 4mm;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22pt; margin-bottom: 5mm;
+  }
+  .cover h1 { color: #fff; font-size: 24pt; margin-bottom: 2mm; }
+  .cover .subtitle { font-size: 13pt; font-weight: 300; color: rgba(255,255,255,0.8); margin-bottom: 8mm; }
+  .cover .divider  { width: 24mm; height: 1px; background: rgba(255,255,255,0.3); margin: 5mm auto; }
+  .cover .meta     { font-size: 8.5pt; color: rgba(255,255,255,0.65); }
+  .cover .badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 20px;
+    padding: 1.5mm 5mm;
+    font-size: 8pt;
+    margin: 1.5mm 1mm;
+    color: rgba(255,255,255,0.85);
+  }
+
+  /* ── Section Header Bands ─────────────────────────────────────────────── */
+  .sec-header {
+    border-radius: 3mm;
+    padding: 4mm 6mm;
+    margin-bottom: 5mm;
+    display: flex;
+    align-items: center;
+    gap: 3mm;
+  }
+  .sec-header .icon {
+    width: 9mm; height: 9mm;
+    background: rgba(255,255,255,0.2);
+    border-radius: 2mm;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14pt;
+    flex-shrink: 0;
+  }
+  .sec-header .num {
+    font-size: 8pt; font-weight: 700; opacity: 0.75;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+
+  .navy    { background: linear-gradient(135deg, #1e1b4b, #312e81); }
+  .magenta { background: linear-gradient(135deg, #9d174d, #be185d); }
+  .purple  { background: linear-gradient(135deg, #5b21b6, #7c3aed); }
+  .teal    { background: linear-gradient(135deg, #0f766e, #0d9488); }
+  .amber   { background: linear-gradient(135deg, #b45309, #d97706); }
+  .green   { background: linear-gradient(135deg, #15803d, #16a34a); }
+  .indigo  { background: linear-gradient(135deg, #3730a3, #4338ca); }
+  .rose    { background: linear-gradient(135deg, #be123c, #e11d48); }
+
+  /* ── Content Cards ────────────────────────────────────────────────────── */
+  .card {
+    border: 1px solid #e5e7eb;
+    border-radius: 3mm;
+    padding: 4mm 5mm;
+    margin-bottom: 3mm;
+    background: #fafafa;
+  }
+  .card-white { background: #fff; border: 1px solid #e5e7eb; border-radius: 3mm; padding: 4mm 5mm; margin-bottom: 3mm; }
+
+  /* ── Two Column Grid ──────────────────────────────────────────────────── */
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm; margin-bottom: 3mm; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 3mm; margin-bottom: 3mm; }
+
+  /* ── Steps ────────────────────────────────────────────────────────────── */
+  .steps { list-style: none; padding: 0; margin-bottom: 3mm; }
+  .steps li {
+    display: flex;
+    align-items: flex-start;
+    gap: 3mm;
+    margin-bottom: 2.5mm;
+    font-size: 9pt;
+    color: #374151;
+  }
+  .step-num {
+    flex-shrink: 0;
+    width: 5.5mm; height: 5.5mm;
+    border-radius: 50%;
+    background: #312e81;
+    color: #fff;
+    font-size: 7.5pt;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    margin-top: 0.3mm;
+  }
+
+  /* ── Callout Boxes ────────────────────────────────────────────────────── */
+  .tip, .warn, .info, .note {
+    border-radius: 2.5mm;
+    padding: 3mm 4mm;
+    margin-bottom: 3mm;
+    font-size: 8.5pt;
+    display: flex;
+    gap: 2.5mm;
+    align-items: flex-start;
+  }
+  .tip  { background: #f0fdf4; border-left: 3px solid #22c55e; color: #14532d; }
+  .warn { background: #fffbeb; border-left: 3px solid #f59e0b; color: #78350f; }
+  .info { background: #eff6ff; border-left: 3px solid #3b82f6; color: #1e3a5f; }
+  .note { background: #f5f3ff; border-left: 3px solid #7c3aed; color: #3b0764; }
+  .tip-icon, .warn-icon, .info-icon, .note-icon {
+    font-size: 11pt; flex-shrink: 0; margin-top: -0.5mm;
+  }
+
+  /* ── Badge Pills ──────────────────────────────────────────────────────── */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 1.5mm;
+    font-size: 7.5pt;
+    font-weight: 600;
+    padding: 0.8mm 2.5mm;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+  .pill-navy    { background: #ede9fe; color: #312e81; }
+  .pill-magenta { background: #fce7f3; color: #9d174d; }
+  .pill-green   { background: #dcfce7; color: #15803d; }
+  .pill-amber   { background: #fef3c7; color: #92400e; }
+  .pill-red     { background: #fee2e2; color: #991b1b; }
+  .pill-gray    { background: #f3f4f6; color: #4b5563; }
+  .pill-teal    { background: #ccfbf1; color: #0f766e; }
+  .pill-purple  { background: #f3e8ff; color: #6b21a8; }
+
+  /* ── Table ────────────────────────────────────────────────────────────── */
+  table { width: 100%; border-collapse: collapse; font-size: 8.5pt; margin-bottom: 3mm; }
+  th {
+    background: #1e1b4b;
+    color: #fff;
+    padding: 2.5mm 3mm;
+    text-align: left;
+    font-size: 8pt;
+    font-weight: 600;
+  }
+  td {
+    padding: 2mm 3mm;
+    border-bottom: 1px solid #e5e7eb;
+    color: #374151;
+    vertical-align: top;
+  }
+  tr:nth-child(even) td { background: #f9fafb; }
+  tr:last-child td { border-bottom: none; }
+
+  /* ── Workflow Diagram ─────────────────────────────────────────────────── */
+  .flow {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    flex-wrap: wrap;
+    margin: 3mm 0;
+  }
+  .flow-box {
+    background: #ede9fe;
+    border: 1.5px solid #c4b5fd;
+    border-radius: 2mm;
+    padding: 2mm 3.5mm;
+    font-size: 8pt;
+    font-weight: 600;
+    color: #3730a3;
+    text-align: center;
+    min-width: 22mm;
+  }
+  .flow-box.green  { background: #dcfce7; border-color: #86efac; color: #14532d; }
+  .flow-box.amber  { background: #fef3c7; border-color: #fcd34d; color: #78350f; }
+  .flow-box.navy   { background: #e0e7ff; border-color: #a5b4fc; color: #1e1b4b; }
+  .flow-box.magenta{ background: #fce7f3; border-color: #f9a8d4; color: #9d174d; }
+  .flow-arr {
+    font-size: 12pt;
+    color: #9ca3af;
+    padding: 0 1.5mm;
+    font-weight: 300;
+  }
+
+  /* ── Screen Mockup ────────────────────────────────────────────────────── */
+  .mockup {
+    border: 1.5px solid #d1d5db;
+    border-radius: 3mm;
+    overflow: hidden;
+    margin-bottom: 3mm;
+    font-size: 7.5pt;
+  }
+  .mockup-bar {
+    background: #1e1b4b;
+    color: #fff;
+    padding: 2mm 4mm;
+    font-size: 8pt;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 2mm;
+  }
+  .mockup-bar .dots { display: flex; gap: 1mm; }
+  .mockup-bar .dot  { width: 2.5mm; height: 2.5mm; border-radius: 50%; }
+  .mockup-body { padding: 3mm 4mm; background: #f9fafb; }
+  .mockup-row {
+    display: flex;
+    align-items: center;
+    gap: 2mm;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 2mm;
+    padding: 2mm 3mm;
+    margin-bottom: 1.5mm;
+    font-size: 7.5pt;
+  }
+  .mockup-row .lbl { color: #6b7280; font-size: 7pt; min-width: 18mm; }
+  .mockup-row .val { color: #1e1b4b; font-weight: 600; }
+
+  /* ── Icon Inline ──────────────────────────────────────────────────────── */
+  .ic { font-style: normal; }
+
+  /* ── TOC ──────────────────────────────────────────────────────────────── */
+  .toc-row {
+    display: flex;
+    align-items: baseline;
+    gap: 1mm;
+    margin-bottom: 2mm;
+    font-size: 9pt;
+  }
+  .toc-row .toc-num  { color: #7c3aed; font-weight: 700; min-width: 7mm; }
+  .toc-row .toc-title{ color: #1e1b4b; font-weight: 600; flex: 1; }
+  .toc-row .toc-dots { flex: 1; border-bottom: 1px dotted #d1d5db; margin: 0 1mm 1.5mm; }
+  .toc-row .toc-pg   { color: #6b7280; font-size: 8.5pt; }
+
+  .sub-toc {
+    margin-left: 7mm;
+    margin-bottom: 1mm;
+    display: flex;
+    align-items: baseline;
+    gap: 1mm;
+    font-size: 8.5pt;
+  }
+  .sub-toc .toc-title { color: #4b5563; font-weight: 500; }
+
+  /* ── Sidebar Nav Mockup ───────────────────────────────────────────────── */
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 2mm;
+    padding: 1.8mm 3mm;
+    font-size: 8pt;
+    border-radius: 2mm;
+    color: #e0e7ff;
+  }
+  .nav-item.active { background: rgba(255,255,255,0.15); color: #fff; font-weight: 600; }
+  .nav-icon { font-size: 10pt; width: 5mm; text-align: center; }
+
+  /* ── Key ──────────────────────────────────────────────────────────────── */
+  .kbd {
+    display: inline-block;
+    background: #f3f4f6;
+    border: 1px solid #d1d5db;
+    border-bottom: 2px solid #9ca3af;
+    border-radius: 2px;
+    padding: 0 2mm;
+    font-family: monospace;
+    font-size: 7.5pt;
+    color: #374151;
+  }
+
+  /* ── HR ───────────────────────────────────────────────────────────────── */
+  hr { border: none; border-top: 1px solid #e5e7eb; margin: 4mm 0; }
+
+  /* ── Footer strip ─────────────────────────────────────────────────────── */
+  .footer-strip {
+    background: #1e1b4b;
+    border-radius: 2mm;
+    padding: 2.5mm 5mm;
+    color: rgba(255,255,255,0.6);
+    font-size: 7.5pt;
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6mm;
+  }
+
+  .highlight { background: #fef9c3; padding: 0 1px; border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     COVER PAGE
+════════════════════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="cover">
+    <div class="cover-logo">💎</div>
+    <h1>Pearl Isle Capital</h1>
+    <div class="subtitle">Pawn Management System</div>
+    <div class="subtitle" style="font-size:10pt; margin-bottom:4mm;">User Guide</div>
+    <div class="divider"></div>
+    <div style="margin-bottom:5mm;">
+      <span class="badge">📦 Items & Barcodes</span>
+      <span class="badge">👥 Customers</span>
+      <span class="badge">🏢 Branches</span>
+      <span class="badge">🔍 Audits</span>
+      <span class="badge">📊 Reports</span>
+    </div>
+    <div class="meta">
+      Version 1.0 &nbsp;·&nbsp; April 2026 &nbsp;·&nbsp; Internal Use Only
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     TABLE OF CONTENTS
+════════════════════════════════════════════════════════════════════════════ -->
+<div class="page page-break">
+  <div class="sec-header navy">
+    <div class="icon">📋</div>
+    <div><div class="num">Contents</div><h2 style="margin:0;">Table of Contents</h2></div>
+  </div>
+
+  <div class="card-white">
+    <div class="toc-row"><span class="toc-num">1</span><span class="toc-title">Getting Started — Login & Navigation</span><span class="toc-dots"></span><span class="toc-pg">3</span></div>
+    <div class="sub-toc"><span class="toc-title">1.1 Logging In</span></div>
+    <div class="sub-toc"><span class="toc-title">1.2 Navigation Sidebar</span></div>
+    <div class="sub-toc"><span class="toc-title">1.3 User Roles</span></div>
+
+    <div class="toc-row" style="margin-top:2mm;"><span class="toc-num">2</span><span class="toc-title">Items — Pawned Articles</span><span class="toc-dots"></span><span class="toc-pg">4</span></div>
+    <div class="sub-toc"><span class="toc-title">2.1 Browsing & Searching Items</span></div>
+    <div class="sub-toc"><span class="toc-title">2.2 Creating a New Item</span></div>
+    <div class="sub-toc"><span class="toc-title">2.3 Editing an Item</span></div>
+    <div class="sub-toc"><span class="toc-title">2.4 Item Detail & Barcode Printing</span></div>
+
+    <div class="toc-row" style="margin-top:2mm;"><span class="toc-num">3</span><span class="toc-title">Customers</span><span class="toc-dots"></span><span class="toc-pg">6</span></div>
+    <div class="sub-toc"><span class="toc-title">3.1 Browsing Customers</span></div>
+    <div class="sub-toc"><span class="toc-title">3.2 Creating a Customer</span></div>
+    <div class="sub-toc"><span class="toc-title">3.3 Customer Detail Profile</span></div>
+
+    <div class="toc-row" style="margin-top:2mm;"><span class="toc-num">4</span><span class="toc-title">Branches</span><span class="toc-dots"></span><span class="toc-pg">7</span></div>
+    <div class="sub-toc"><span class="toc-title">4.1 Creating Branches</span></div>
+    <div class="sub-toc"><span class="toc-title">4.2 Assigning Customers to Branches</span></div>
+
+    <div class="toc-row" style="margin-top:2mm;"><span class="toc-num">5</span><span class="toc-title">Standard Audit (Barcode Scan)</span><span class="toc-dots"></span><span class="toc-pg">8</span></div>
+    <div class="sub-toc"><span class="toc-title">5.1 Starting a Standard Audit</span></div>
+    <div class="sub-toc"><span class="toc-title">5.2 Scanning Items</span></div>
+    <div class="sub-toc"><span class="toc-title">5.3 Scan Statuses</span></div>
+    <div class="sub-toc"><span class="toc-title">5.4 Corrections & Remarks</span></div>
+    <div class="sub-toc"><span class="toc-title">5.5 Finalizing & Bulk Release</span></div>
+
+    <div class="toc-row" style="margin-top:2mm;"><span class="toc-num">6</span><span class="toc-title">Initial Audit (Inventory Review)</span><span class="toc-dots"></span><span class="toc-pg">10</span></div>
+    <div class="sub-toc"><span class="toc-title">6.1 Creating an Initial Audit</span></div>
+    <div class="sub-toc"><span class="toc-title">6.2 Reviewing Ticket Groups</span></div>
+    <div class="sub-toc"><span class="toc-title">6.3 Editing Items</span></div>
+    <div class="sub-toc"><span class="toc-title">6.4 Adding Items to a Ticket</span></div>
+    <div class="sub-toc"><span class="toc-title">6.5 Marking Tickets Complete</span></div>
+    <div class="sub-toc"><span class="toc-title">6.6 Finalizing the Audit</span></div>
+    <div class="sub-toc"><span class="toc-title">6.7 Downloading Excel & PDF Reports</span></div>
+
+    <div class="toc-row" style="margin-top:2mm;"><span class="toc-num">7</span><span class="toc-title">Reports & Activity Log</span><span class="toc-dots"></span><span class="toc-pg">13</span></div>
+
+    <div class="toc-row" style="margin-top:2mm;"><span class="toc-num">8</span><span class="toc-title">Role Permissions Reference</span><span class="toc-dots"></span><span class="toc-pg">14</span></div>
+  </div>
+
+  <div class="info no-break">
+    <span class="info-icon">ℹ️</span>
+    <div><strong>How to use this guide:</strong> Open this file in any web browser (Chrome, Edge) and press <span class="kbd">Ctrl</span> + <span class="kbd">P</span> to print or save as PDF. Set paper size to <strong>A4</strong> and enable <em>Background graphics</em> in print settings for full colour output.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     SECTION 1 — GETTING STARTED
+════════════════════════════════════════════════════════════════════════════ -->
+<div class="page page-break">
+  <div class="sec-header navy">
+    <div class="icon">🚀</div>
+    <div><div class="num">Section 1</div><h2 style="margin:0;">Getting Started</h2></div>
+  </div>
+
+  <!-- 1.1 Login -->
+  <div class="section no-break">
+    <h3>1.1 &nbsp;Logging In</h3>
+    <ol class="steps">
+      <li><span class="step-num">1</span>Open your browser and navigate to the application URL provided by your administrator.</li>
+      <li><span class="step-num">2</span>Enter your <strong>username</strong> (or email) and <strong>password</strong>.</li>
+      <li><span class="step-num">3</span>Click <strong>Sign In</strong>. You will be redirected to the Dashboard.</li>
+    </ol>
+    <div class="tip"><span class="tip-icon">✅</span><div>If you forget your password, contact your system administrator to reset it.</div></div>
+  </div>
+
+  <!-- 1.2 Navigation -->
+  <div class="section no-break">
+    <h3>1.2 &nbsp;Navigation Sidebar</h3>
+    <div class="grid2">
+      <div>
+        <p>The left sidebar is always visible and provides access to all main sections of the application.</p>
+        <ul>
+          <li><strong>Dashboard</strong> — Overview and quick stats</li>
+          <li><strong>Items</strong> — Browse all pawned articles</li>
+          <li><strong>Customers</strong> — Customer directory</li>
+          <li><strong>Branches</strong> — Branch management</li>
+          <li><strong>Audits</strong> — Audit sessions</li>
+          <li><strong>Reports</strong> — Analytics & summaries</li>
+          <li><strong>Activity Log</strong> — System event history</li>
+        </ul>
+      </div>
+      <div style="background:#1e1b4b; border-radius:3mm; padding:3mm 2mm;">
+        <div style="padding:2mm 3mm; margin-bottom:2mm; border-bottom:1px solid rgba(255,255,255,0.1);">
+          <div style="font-size:8.5pt; font-weight:700; color:#fff;">💎 Pearl Isle Capital</div>
+          <div style="font-size:7pt; color:rgba(255,255,255,0.5);">Pawn Manager</div>
+        </div>
+        <div class="nav-item active"><span class="nav-icon">🏠</span> Dashboard</div>
+        <div class="nav-item"><span class="nav-icon">📦</span> Items</div>
+        <div class="nav-item"><span class="nav-icon">👥</span> Customers</div>
+        <div class="nav-item"><span class="nav-icon">🏢</span> Branches</div>
+        <div class="nav-item"><span class="nav-icon">🔍</span> Audits</div>
+        <div class="nav-item"><span class="nav-icon">📊</span> Reports</div>
+        <div class="nav-item"><span class="nav-icon">📋</span> Activity Log</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 1.3 Roles -->
+  <div class="section no-break">
+    <h3>1.3 &nbsp;User Roles</h3>
+    <table>
+      <thead>
+        <tr><th>Role</th><th>Description</th><th>Key Permissions</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="pill pill-gray">USER</span></td>
+          <td>Standard staff member</td>
+          <td>View items, customers, audits, reports. Scan barcodes in standard audits.</td>
+        </tr>
+        <tr>
+          <td><span class="pill pill-navy">ADMIN</span></td>
+          <td>Branch manager / supervisor</td>
+          <td>All of USER + create/edit items, manage customers, create &amp; finalize audits, manage branches, bulk release items.</td>
+        </tr>
+        <tr>
+          <td><span class="pill pill-magenta">SUPER_ADMIN</span></td>
+          <td>System administrator</td>
+          <td>Full access to all features and settings.</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="warn"><span class="warn-icon">⚠️</span><div>Actions that require ADMIN or SUPER_ADMIN are marked with a <span class="pill pill-navy" style="font-size:7pt;">Admin Only</span> badge throughout this guide.</div></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     SECTION 2 — ITEMS
+════════════════════════════════════════════════════════════════════════════ -->
+<div class="page page-break">
+  <div class="sec-header magenta">
+    <div class="icon">📦</div>
+    <div><div class="num">Section 2</div><h2 style="margin:0;">Items — Pawned Articles</h2></div>
+  </div>
+
+  <!-- 2.1 Browse -->
+  <div class="section no-break">
+    <h3>2.1 &nbsp;Browsing &amp; Searching Items</h3>
+    <p>Navigate to <strong>Items</strong> in the sidebar. Items are grouped by <strong>Ticket Number</strong>. Click any ticket row to expand and see individual items.</p>
+    <div class="grid2">
+      <div class="card">
+        <h4>🔍 Search &amp; Filter</h4>
+        <ul>
+          <li>Type in the search bar to find by <strong>ticket no</strong>, <strong>barcode</strong>, or <strong>customer name</strong></li>
+          <li>Use the <strong>Status</strong> filter to show only <span class="pill pill-green">Active</span> or <span class="pill pill-gray">Released</span> items</li>
+          <li>Results update as you type</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>📄 Ticket Groups</h4>
+        <ul>
+          <li>Each row shows the <strong>Ticket No</strong>, customer name, pawn date, item count, and total weight</li>
+          <li>Click the <strong>▶</strong> chevron (or the row) to expand individual items</li>
+          <li>Click customer name to go directly to their profile</li>
+        </ul>
+      </div>
+    </div>
+    <div class="tip"><span class="tip-icon">✅</span><div>Use the <strong>CSV Import</strong> button to bulk-upload items from a spreadsheet. Download the template first to ensure correct column format.</div></div>
+  </div>
+
+  <!-- 2.2 Create -->
+  <div class="section no-break">
+    <h3>2.2 &nbsp;Creating a New Item &nbsp;<span class="pill pill-navy" style="font-size:7pt;">Admin Only</span></h3>
+    <ol class="steps">
+      <li><span class="step-num">1</span>Click the <strong>+ New Item</strong> button (top-right of Items page).</li>
+      <li><span class="step-num">2</span>Fill in the form fields (see table below).</li>
+      <li><span class="step-num">3</span>Click <strong>Save Item</strong>. A barcode is automatically generated.</li>
+    </ol>
+    <table>
+      <thead><tr><th>Field</th><th>Required</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Customer</strong></td><td>✅ Yes</td><td>Search and select existing customer</td></tr>
+        <tr><td><strong>Ticket No</strong></td><td>✅ Yes</td><td>Pawn ticket number (e.g. TK-001)</td></tr>
+        <tr><td><strong>Pawn Date</strong></td><td>✅ Yes</td><td>Date the item was pawned</td></tr>
+        <tr><td><strong>Item Type</strong></td><td>✅ Yes</td><td>ring, chain, bracelet, earrings, necklace, bangle, pendant, other</td></tr>
+        <tr><td><strong>Net Weight (g)</strong></td><td>✅ Yes</td><td>Net weight of gold in grams (3 decimal places)</td></tr>
+        <tr><td><strong>Gross Weight (g)</strong></td><td>No</td><td>Total weight including stones/setting</td></tr>
+        <tr><td><strong>Karatage (K)</strong></td><td>No</td><td>Gold purity e.g. 22, 18, 14</td></tr>
+        <tr><td><strong>Remarks</strong></td><td>No</td><td>Free text notes about the item</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 2.3 Edit -->
+  <div class="section no-break">
+    <h3>2.3 &nbsp;Editing an Item &nbsp;<span class="pill pill-navy" style="font-size:7pt;">Admin Only</span></h3>
+    <div class="grid2">
+      <div>
+        <p><strong>Inline Edit (Items list page):</strong></p>
+        <ol class="steps">
+          <li><span class="step-num">1</span>Expand a ticket group and then expand an individual item.</li>
+          <li><span class="step-num">2</span>Click the <strong>✏️ Edit</strong> button in the item row.</li>
+          <li><span class="step-num">3</span>Modify the fields and click <strong>💾 Save</strong>.</li>
+          <li><span class="step-num">4</span>All changes are recorded in edit history.</li>
+        </ol>
+      </div>
+      <div>
+        <p><strong>Edit via Item Detail page:</strong></p>
+        <ol class="steps">
+          <li><span class="step-num">1</span>Click <strong>Full Detail</strong> on any item.</li>
+          <li><span class="step-num">2</span>Click <strong>Edit Item</strong> in the detail panel.</li>
+          <li><span class="step-num">3</span>Modify fields and <strong>Save</strong>.</li>
+        </ol>
+        <div class="note"><span class="note-icon">🔒</span><div>Editing is <strong>disabled</strong> on items that are part of a finalized audit.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Item Detail page -->
+<div class="page page-break">
+  <div class="sec-header magenta">
+    <div class="icon">🏷️</div>
+    <div><div class="num">Section 2 (cont.)</div><h2 style="margin:0;">Item Detail &amp; Barcode Printing</h2></div>
+  </div>
+
+  <div class="section no-break">
+    <h3>2.4 &nbsp;Item Detail Page</h3>
+    <p>Click <strong>Full Detail</strong> on any item to open its dedicated page at <code>/items/:id</code>.</p>
+    <div class="grid2">
+      <div>
+        <div class="card">
+          <h4>📋 Information Displayed</h4>
+          <ul>
+            <li><strong>Barcode</strong> — large scannable barcode image</li>
+            <li><strong>Customer</strong> — name, NIC, phone with link to profile</li>
+            <li><strong>Item facts</strong> — type, net weight, gross weight, karatage, remarks</li>
+            <li><strong>Dates</strong> — pawn date, registration date, release date (if released)</li>
+            <li><strong>Status</strong> — <span class="pill pill-green">Active</span> or <span class="pill pill-gray">Released</span></li>
+          </ul>
+        </div>
+        <div class="card">
+          <h4>📜 Edit History</h4>
+          <p>Scroll down to see a full timeline of every field change — who changed it, when, and the old vs new value.</p>
+        </div>
+      </div>
+      <div>
+        <div class="card">
+          <h4>🖨️ Printing the Barcode</h4>
+          <ol class="steps">
+            <li><span class="step-num">1</span>Open the item's detail page.</li>
+            <li><span class="step-num">2</span>Click the <strong>🖨️ Print</strong> button near the barcode.</li>
+            <li><span class="step-num">3</span>A print-optimized label appears with barcode, ticket no, customer name, weight, and karatage.</li>
+            <li><span class="step-num">4</span>The printer auto-cuts after printing.</li>
+          </ol>
+          <div class="tip"><span class="tip-icon">✅</span><div>The label is sized for a <strong>58mm thermal receipt printer</strong>. Make sure the correct printer driver is installed.</div></div>
+        </div>
+        <div class="card">
+          <h4>🔎 Scan History</h4>
+          <p>Shows every time this barcode was scanned — creation, audit scans, and verification events — with timestamp and operator.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     SECTION 3 — CUSTOMERS
+════════════════════════════════════════════════════════════════════════════ -->
+<div class="page page-break">
+  <div class="sec-header teal">
+    <div class="icon">👥</div>
+    <div><div class="num">Section 3</div><h2 style="margin:0;">Customers</h2></div>
+  </div>
+
+  <div class="section no-break">
+    <h3>3.1 &nbsp;Browsing Customers</h3>
+    <p>Navigate to <strong>Customers</strong>. Customers are displayed as cards in a grid.</p>
+    <div class="grid2">
+      <div class="card">
+        <h4>🔍 Search &amp; Filter</h4>
+        <ul>
+          <li>Search by <strong>name</strong> or <strong>NIC number</strong></li>
+          <li>Filter by <strong>Branch</strong> using the branch pills at the top</li>
+          <li>Each pill shows the customer count for that branch</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>🃏 Customer Cards</h4>
+        <p>Each card shows:</p>
+        <ul>
+          <li>Customer initials avatar</li>
+          <li>Full name, NIC number</li>
+          <li>Phone and email</li>
+          <li>Assigned branches</li>
+          <li>Number of pawned items</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="section no-break">
+    <h3>3.2 &nbsp;Creating a Customer &nbsp;<span class="pill pill-navy" style="font-size:7pt;">Admin Only</span></h3>
+    <ol class="steps">
+      <li><span class="step-num">1</span>Click <strong>+ New Customer</strong> (top-right).</li>
+      <li><span class="step-num">2</span>Fill in <strong>Full Name</strong> (required), NIC, Phone, Email, and Address.</li>
+      <li><span class="step-num">3</span>Optionally assign to one or more <strong>Branches</strong>.</li>
+      <li><span class="step-num">4</span>Click <strong>Save</strong>.</li>
+    </ol>
+    <div class="tip"><span class="tip-icon">✅</span><div>You can also bulk-import customers using the <strong>CSV Import</strong> button. Download the template to see required columns.</div></div>
+  </div>
+
+  <div class="section no-break">
+    <h3>3.3 &nbsp;Customer Detail Profile</h3>
+    <p>Click any customer card to open their profile page.</p>
+    <div class="grid3">
+      <div class="card" style="text-align:center;">
+        <div style="font-size:20pt;">📊</div>
+        <h4 style="text-align:center;">Statistics</h4>
+        <p>Total items, active count, released count, and total active gold weight</p>
+      </div>
+      <div class="card" style="text-align:center;">
+        <div style="font-size:20pt;">📞</div>
+        <h4 style="text-align:center;">Contact Info</h4>
+        <p>NIC, phone, email, address, member since date</p>
+      </div>
+      <div class="card" style="text-align:center;">
+        <div style="font-size:20pt;">🏷️</div>
+        <h4 style="text-align:center;">Pawned Items</h4>
+        <p>Table of all items with type, weight, date, and status. Click any row to open item detail.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     SECTION 4 — BRANCHES
+════════════════════════════════════════════════════════════════════════════ -->
+<div class="page page-break">
+  <div class="sec-header amber">
+    <div class="icon">🏢</div>
+    <div><div class="num">Section 4</div><h2 style="margin:0;">Branches</h2></div>
+  </div>
+
+  <div class="section no-break">
+    <h3>4.1 &nbsp;Creating a Branch &nbsp;<span class="pill pill-navy" style="font-size:7pt;">Admin Only</span></h3>
+    <ol class="steps">
+      <li><span class="step-num">1</span>Navigate to <strong>Branches</strong> in the sidebar.</li>
+      <li><span class="step-num">2</span>Click <strong>+ New Branch</strong>.</li>
+      <li><span class="step-num">3</span>Enter the <strong>Branch Name</strong> (e.g. "Head Office", "Kandy Branch").</li>
+      <li><span class="step-num">4</span>Click <strong>Save</strong>. The branch card appears immediately.</li>
+    </ol>
+    <div class="info"><span class="info-icon">ℹ️</span><div>Branches are used to filter customers and to scope Initial Audits to a specific location.</div></div>
+  </div>
+
+  <div class="section no-break">
+    <h3>4.2 &nbsp;Assigning Customers to a Branch &nbsp;<span class="pill pill-navy" style="font-size:7pt;">Admin Only</span></h3>
+    <ol class="steps">
+      <li><span class="step-num">1</span>On the Branches page, click the <strong>Manage Customers</strong> button on a branch card.</li>
+      <li><span class="step-num">2</span>A side drawer opens showing current members and all available customers.</li>
+      <li><span class="step-num">3</span>Use the search box to find a customer, then click <strong>+ Add</strong>.</li>
+      <li><span class="step-num">4</span>To remove, click the <strong>✕</strong> next to a customer's name.</li>
+    </ol>
+    <div class="tip"><span class="tip-icon">✅</span><div>Customers can belong to <strong>multiple branches</strong>. The branch assignment is used for filtering the customer list and for creating branch-specific initial audits.</div></div>
+  </div>
+
+  <div class="section no-break">
+    <h3>4.3 &nbsp;Deleting a Branch &nbsp;<span class="pill pill-navy" style="font-size:7pt;">Admin Only</span></h3>
+    <div class="warn"><span class="warn-icon">⚠️</span><div>Deleting a branch removes all customer-branch assignments for that branch. Customer records themselves are <strong>not</strong> deleted.</div></div>
+    <ol class="steps">
+      <li><span class="step-num">1</span>Click the <strong>🗑️ Delete</strong> button on a branch card.</li>
+      <li><span class="step-num">2</span>Confirm the action in the dialog.</li>
+    </ol>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     SECTION 5 — STANDARD AUDIT
+════════════════════════════════════════════════════════════════════════════ -->
+<div class="page page-break">
+  <div class="sec-header indigo">
+    <div class="icon">🔍</div>
+    <div><div class="num">Section 5</div><h2 style="margin:0;">Standard Audit (Barcode Scan)</h2></div>
+  </div>
+
+  <div class="section no-break">
+    <h3>What is a Standard Audit?</h3>
+    <p>A standard audit physically verifies all <span class="pill pill-green">Active</span> items by scanning their barcodes one by one. It reveals which items are present (<span class="pill pill-green">Found</span>), missing (<span class="pill pill-red">Missing</span>), or unknown (<span class="pill pill-amber">Unknown</span>).</p>
+    <div class="flow">
+      <div class="flow-box navy">Start Audit</div><div class="flow-arr">→</div>
+      <div class="flow-box">Scan Barcodes</div><div class="flow-arr">→</div>
+      <div class="flow-box amber">Review Results</div><div class="flow-arr">→</div>
+      <div class="flow-box green">Finalize</div><div class="flow-arr">→</div>
+      <div class="flow-box magenta">Release Missing</div>
+    </div>
+  </div>
+
+  <div class="section no-break">
+    <h3>5.1 &nbsp;Starting a Standard Audit &nbsp;<span class="pill pill-navy" style="font-size:7pt;">Admin Only</span></h3>
+    <ol class="steps">
+      <li><span class="step-num">1</span>Go to <strong>Audits</strong> and click <strong>New Audit</strong> (navy button, top-right).</li>
+      <li><span class="step-num">2</span>Optionally enter notes about this audit session.</li>
+      <li><span class="step-num">3</span>Click <strong>Start Audit</strong>. The audit detail page opens immediately.</li>
+    </ol>
+    <div class="info"><span class="info-icon">ℹ️</span><div>The system snapshots all currently active items at the moment the audit is created. Only those items appear as expected.</div></div>
+  </div>
+
+  <div class="section no-break">
+    <h3>5.2 &nbsp;Scanning Items</h3>
+    <p>The scanner input is automatically focused when you open the audit. Simply scan each barcode label with a barcode reader.</p>
+    <div class="grid2">
+      <div class="card">
+        <h4>🖥️ Scanner Input</h4>
+        <ul>
+          <li>The cursor is always in the scan input box — no need to click</li>
+          <li>After each scan the box clears automatically</li>
+          <li>The scanned item moves to the top of the list with a status badge</li>
+          <li>You can also type a barcode manually and press <span class="kbd">Enter</span></li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>⚡ Live Stats Bar</h4>
+        <p>The top of the page shows running counts:</p>
+        <ul>
+          <li><span class="pill pill-green">✓ Found</span> — scanned and matched</li>
+          <li><span class="pill pill-red">✗ Missing</span> — expected but not yet scanned</li>
+          <li><span class="pill pill-amber">? Unknown</span> — scanned but not in audit list</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="section no-break">
+    <h3>5.3 &nbsp;Scan Statuses Explained</h3>
+    <table>
+      <thead><tr><th>Status</th><th>Meaning</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><span class="pill pill-green">✓ FOUND</span></td>
+          <td>Item was scanned and matched an expected item</td>
+          <td>No action required</td>
+        </tr>
+        <tr>
+          <td><span class="pill pill-red">✗ MISSING</span></td>
+          <td>Item was expected but its barcode was not scanned</td>
+          <td>Investigate. Can be released after finalization if confirmed missing.</td>
+        </tr>
+        <tr>
+          <td><span class="pill pill-amber">? UNKNOWN</span></td>
+          <td>Barcode was scanned but it does not belong to this audit's snapshot</td>
+          <td>Verify the item. It may have been added after the audit started.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Standard Audit cont. -->
+<div class="page page-break">
+  <div class="sec-header indigo">
+    <div class="icon">✏️</div>
+    <div><div class="num">Section 5 (cont.)</div><h2 style="margin:0;">Corrections, Finalize &amp; Bulk Release</h2></div>
+  </div>
+
+  <div class="section no-break">
+    <h3>5.4 &nbsp;Corrections &amp; Remarks During Scanning</h3>
+    <p>Click any scanned item row to expand its detail panel.</p>
+    <div class="grid2">
+      <div class="card">
+        <h4>📝 Adding Remarks</h4>
+        <ul>
+          <li>Type in the <strong>Remarks</strong> text area</li>
+          <li>Remarks save automatically when you click away (on-blur)</li>
+          <li>Useful for noting physical condition of an item</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>✏️ Correcting Item Values</h4>
+        <ul>
+          <li>Click <strong>Edit</strong> to correct <strong>Item Type</strong> or <strong>Net Weight</strong></li>
+          <li>All corrections are permanently recorded with timestamp and operator</li>
+          <li>The correction history panel shows all past changes across all audits</li>
+        </ul>
+      </div>
+    </div>
+    <div class="note"><span class="note-icon">🔒</span><div>Corrections and remarks are <strong>disabled</strong> once an audit is finalized.</div></div>
+  </div>
+
+  <div class="section no-break">
+    <h3>5.5 &nbsp;Finalizing the Audit &nbsp;<span class="pill pill-navy" style="font-size:7pt;">Admin Only</span></h3>
+    <div class="warn"><span class="warn-icon">⚠️</span><div>Finalization is <strong>irreversible</strong>. Once finalized, no edits can be made to the audit.</div></div>
+    <ol class="steps">
+      <li><span class="step-num">1</span>Click <strong>Finalize Audit</strong> (bottom of the page).</li>
+      <li><span class="step-num">2</span>Confirm in the dialog. All unscanned active items are marked <span class="pill pill-red">MISSING</span>.</li>
+      <li><span class="step-num">3</span>The audit status changes to <span class="pill pill-green">Finalized</span>.</li>
+    </ol>
+  </div>
+
+  <div class="section no-break">
+    <h3>5.6 &nbsp;Bulk Release of Missing Items &nbsp;<span class="pill pill-navy" style="font-size:7pt;">Admin Only</span></h3>
+    <p>After finalization, items confirmed as missing can be released (removed from active stock).</p>
+    <ol class="steps">
+      <li><span class="step-num">1</span>In the finalized audit, tick the checkboxes next to <span class="pill pill-red">MISSING</span> items.</li>
+      <li><span class="step-num">2</span>Use <strong>Select All Missing</strong> to check all at once.</li>
+      <li><span class="step-num">3</span>Click <strong>Release Selected</strong>.</li>
+      <li><span class="step-num">4</span>A two-step confirmation modal shows: first review the list, then click <strong>Confirm Release</strong>.</li>
+      <li><span class="step-num">5</span>Released items are marked <span class="pill pill-gray">Released</span> and removed from future audit snapshots.</li>
+    </ol>
+    <div class="info"><span class="info-icon">ℹ️</span><div>Only items that are still <span class="pill pill-green">Active</span> can be released. Already released items are shown greyed-out and cannot be selected.</div></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     SECTION 6 — INITIAL AUDIT
+════════════════════════════════════════════════════════════════════════════ -->
+<div class="page page-break">
+  <div class="sec-header purple">
+    <div class="icon">📋</div>
+    <div><div class="num">Section 6</div><h2 style="margin:0;">Initial Audit (Inventory Review)</h2></div>
+  </div>
+
+  <div class="section no-break">
+    <h3>What is an Initial Audit?</h3>
+    <p>An initial audit is a <strong>manual review</strong> of your existing inventory — no barcode scanning required. It is used to verify and correct item details (weights, types, karatage) by physically inspecting each item. Items are grouped by ticket number so an operator can review one ticket at a time.</p>
+    <div class="flow">
+      <div class="flow-box navy">Create Audit<br/>(with filters)</div><div class="flow-arr">→</div>
+      <div class="flow-box">Review &amp; Edit<br/>Items</div><div class="flow-arr">→</div>
+      <div class="flow-box amber">Mark Tickets<br/>Complete</div><div class="flow-arr">→</div>
+      <div class="flow-box green">Finalize</div><div class="flow-arr">→</div>
+      <div class="flow-box magenta">Download<br/>Report</div>
+    </div>
+  </div>
+
+  <div class="section no-break">
+    <h3>6.1 &nbsp;Creating an Initial Audit &nbsp;<span class="pill pill-navy" style="font-size:7pt;">Admin Only</span></h3>
+    <ol class="steps">
+      <li><span class="step-num">1</span>Go to <strong>Audits</strong> and click <strong>Initial Audit</strong> (purple button, top-right).</li>
+      <li><span class="step-num">2</span>In the drawer, set optional filters:</li>
+    </ol>
+    <div class="card" style="margin-left:8mm;">
+      <table style="margin-bottom:0;">
+        <thead><tr><th>Filter</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Date From / Date To</strong></td><td>Only include items with pawn dates in this range</td></tr>
+          <tr><td><strong>Branch</strong></td><td>Only include items belonging to customers in the selected branch</td></tr>
+          <tr><td><strong>Notes</strong></td><td>Internal notes for this audit session</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <ol class="steps" start="3">
+      <li><span class="step-num">3</span>Click <strong>Start Initial Audit</strong>. You are taken to the audit detail page.</li>
+    </ol>
+    <div class="tip"><span class="tip-icon">✅</span><div>Leave filters blank to include all active items. Filtering by branch or date helps break a large inventory into manageable sessions.</div></div>
+  </div>
+</div>
+
+<!-- Initial Audit cont. — Review & Edit -->
+<div class="page page-break">
+  <div class="sec-header purple">
+    <div class="icon">🔎</div>
+    <div><div class="num">Section 6 (cont.)</div><h2 style="margin:0;">Reviewing &amp; Editing Items</h2></div>
+  </div>
+
+  <div class="section no-break">
+    <h3>6.2 &nbsp;Reviewing Ticket Groups</h3>
+    <p>Items are displayed grouped by ticket number. Each group row shows: Ticket No, Customer Name, Pawn Date, item count, and total net weight.</p>
+    <div class="card">
+      <h4>Progress Bar</h4>
+      <p>At the top of the page a <strong>progress bar</strong> tracks how many tickets have been marked complete. The bar turns <strong>green</strong> when 100% of tickets are reviewed — the Finalize button activates at this point.</p>
+    </div>
+    <ol class="steps">
+      <li><span class="step-num">1</span>Click any ticket row (or the <strong>▶</strong> chevron) to expand it and see individual items.</li>
+      <li><span class="step-num">2</span>Review each item — verify the type, weights, and karatage match the physical item.</li>
+    </ol>
+  </div>
+
+  <div class="section no-break">
+    <h3>6.3 &nbsp;Editing Items &nbsp;<span class="pill pill-navy" style="font-size:7pt;">Admin Only</span></h3>
+    <ol class="steps">
+      <li><span class="step-num">1</span>Expand a ticket group and then expand an individual item.</li>
+      <li><span class="step-num">2</span>Click <strong>✏️ Edit</strong>.</li>
+      <li><span class="step-num">3</span>Correct any of the following fields:</li>
+    </ol>
+    <div class="grid3" style="margin-left:8mm;">
+      <div class="card" style="text-align:center;"><strong>Item Type</strong><br/><small>e.g. ring → bracelet</small></div>
+      <div class="card" style="text-align:center;"><strong>Net Weight</strong><br/><small>in grams (3dp)</small></div>
+      <div class="card" style="text-align:center;"><strong>Gross Weight</strong><br/><small>optional</small></div>
+    </div>
+    <div class="grid2" style="margin-left:8mm;">
+      <div class="card" style="text-align:center;"><strong>Karatage</strong><br/><small>e.g. 22, 18, 14</small></div>
+      <div class="card" style="text-align:center;"><strong>Remarks</strong><br/><small>free text notes</small></div>
+    </div>
+    <ol class="steps" start="4">
+      <li><span class="step-num">4</span>Click <strong>💾 Save</strong>. The change is recorded in the item's edit history.</li>
+    </ol>
+    <div class="info"><span class="info-icon">ℹ️</span><div>Every edited field is captured in the audit report. The report shows the <strong>original system value</strong> alongside the <strong>audited corrected value</strong> in separate columns.</div></div>
+  </div>
+</div>
+
+<!-- Initial Audit — Add Item -->
+<div class="page page-break">
+  <div class="sec-header purple">
+    <div class="icon">➕</div>
+    <div><div class="num">Section 6 (cont.)</div><h2 style="margin:0;">Adding Items to a Ticket</h2></div>
+  </div>
+
+  <div class="section no-break">
+    <h3>6.4 &nbsp;Adding a New Item to an Existing Ticket &nbsp;<span class="pill pill-navy" style="font-size:7pt;">Admin Only</span></h3>
+    <p>Sometimes one physical article may need to be recorded as two separate items (e.g. a pair of earrings entered as a single record). Use <strong>Add Item to Ticket</strong> to add the extra item directly within the audit.</p>
+    <ol class="steps">
+      <li><span class="step-num">1</span>Expand the relevant ticket group.</li>
+      <li><span class="step-num">2</span>In the expanded footer, click <strong>+ Add Item to Ticket</strong> (blue button).</li>
+      <li><span class="step-num">3</span>An inline form appears. Fill in:</li>
+    </ol>
+    <table style="margin-left:8mm; width:calc(100% - 8mm);">
+      <thead><tr><th>Field</th><th>Required</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Item Type</strong></td><td>✅ Yes</td><td>Select from pill buttons (ring, chain, bracelet, etc.)</td></tr>
+        <tr><td><strong>Net Weight (g)</strong></td><td>✅ Yes</td><td>Minimum 0.001g</td></tr>
+        <tr><td><strong>Gross Weight (g)</strong></td><td>No</td><td>Optional</td></tr>
+        <tr><td><strong>Karatage (K)</strong></td><td>No</td><td>1–24</td></tr>
+        <tr><td><strong>Remarks</strong></td><td>No</td><td>Free text</td></tr>
+      </tbody>
+    </table>
+    <ol class="steps" start="4">
+      <li><span class="step-num">4</span>Click <strong>Add Item to Ticket</strong>. The new item appears in the ticket immediately.</li>
+    </ol>
+    <div class="tip"><span class="tip-icon">✅</span><div>The new item inherits the ticket's customer and pawn date automatically. A new barcode is generated for it behind the scenes.</div></div>
+    <div class="note"><span class="note-icon">🌟</span><div>Items added during an audit are clearly marked in the report with a green <strong>"Added in Audit"</strong> column showing <strong>YES</strong>, and highlighted in green in the PDF export.</div></div>
+  </div>
+</div>
+
+<!-- Initial Audit — Mark + Finalize -->
+<div class="page page-break">
+  <div class="sec-header purple">
+    <div class="icon">✅</div>
+    <div><div class="num">Section 6 (cont.)</div><h2 style="margin:0;">Marking Complete &amp; Finalizing</h2></div>
+  </div>
+
+  <div class="section no-break">
+    <h3>6.5 &nbsp;Marking a Ticket as Complete</h3>
+    <p>After physically reviewing all items in a ticket group, mark it as complete to track your progress.</p>
+    <div class="grid2">
+      <div>
+        <ol class="steps">
+          <li><span class="step-num">1</span>Expand a ticket group.</li>
+          <li><span class="step-num">2</span>At the bottom of the expanded footer, click <strong>"Done — Mark Ticket Complete"</strong> (green button).</li>
+          <li><span class="step-num">3</span>The ticket row disappears from the <em>pending</em> list and moves to <em>completed</em>.</li>
+          <li><span class="step-num">4</span>The progress bar at the top increments.</li>
+        </ol>
+        <div class="info"><span class="info-icon">ℹ️</span><div>You can also click the <strong>✓</strong> checkmark icon in the ticket row (7th column) to quickly mark a ticket without expanding it.</div></div>
+      </div>
+      <div class="card">
+        <h4>Progress States</h4>
+        <div style="margin-bottom:2mm; display:flex; align-items:center; gap:2mm;">
+          <div style="flex:1; height:3mm; background:linear-gradient(90deg,#7c3aed 60%,#e5e7eb 60%); border-radius:20px;"></div>
+          <span style="font-size:8pt; color:#7c3aed;">60%</span>
+        </div>
+        <div style="margin-bottom:2mm; display:flex; align-items:center; gap:2mm;">
+          <div style="flex:1; height:3mm; background:linear-gradient(90deg,#22c55e 100%,#e5e7eb 0%); border-radius:20px;"></div>
+          <span style="font-size:8pt; color:#22c55e;">100% ✓</span>
+        </div>
+        <p>Purple bar while in progress. Turns <strong>green</strong> at 100% — Finalize button becomes active.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section no-break">
+    <h3>6.6 &nbsp;Finalizing the Initial Audit &nbsp;<span class="pill pill-navy" style="font-size:7pt;">Admin Only</span></h3>
+    <div class="warn"><span class="warn-icon">⚠️</span><div>Finalization is <strong>irreversible</strong>. All editing is locked permanently after finalization.</div></div>
+    <ol class="steps">
+      <li><span class="step-num">1</span>Ensure all tickets are marked complete (progress bar = 100%).</li>
+      <li><span class="step-num">2</span>Click <strong>Finalize Audit</strong> (header, top-right). The button is only enabled when all tickets are done.</li>
+      <li><span class="step-num">3</span>A confirmation modal appears showing a list of all completed ticket numbers.</li>
+      <li><span class="step-num">4</span>Read the confirmation word shown in the modal (e.g. <strong>"EAGLE"</strong>).</li>
+      <li><span class="step-num">5</span>Type the word exactly in the input box.</li>
+      <li><span class="step-num">6</span>Click <strong>Confirm Finalize</strong> (or press <span class="kbd">Enter</span>).</li>
+    </ol>
+    <div class="mockup no-break">
+      <div class="mockup-bar">
+        <div class="dots"><div class="dot" style="background:#ef4444;"></div><div class="dot" style="background:#f59e0b;"></div><div class="dot" style="background:#22c55e;"></div></div>
+        Finalize Initial Audit — Confirmation
+      </div>
+      <div class="mockup-body">
+        <div style="font-size:8pt; color:#374151; margin-bottom:2mm;">✅ All <strong>12 tickets</strong> have been reviewed and marked complete.</div>
+        <div style="display:flex; flex-wrap:wrap; gap:1.5mm; margin-bottom:3mm;">
+          <span class="pill pill-navy">TK-001</span><span class="pill pill-navy">TK-002</span><span class="pill pill-navy">TK-003</span><span class="pill pill-navy">TK-004</span><span class="pill pill-navy">TK-005</span><span class="pill pill-navy">...</span>
+        </div>
+        <div style="background:#fffbeb; border:1px solid #fcd34d; border-radius:2mm; padding:2mm 3mm; font-size:8pt; color:#78350f; margin-bottom:2mm;">
+          ⚠️ This action is irreversible. Type the word below to confirm.
+        </div>
+        <div style="font-size:8pt; color:#374151; margin-bottom:1mm;">Type <strong style="font-size:11pt; letter-spacing:2px; color:#312e81;">EAGLE</strong> to confirm:</div>
+        <div style="background:#fff; border:1.5px solid #7c3aed; border-radius:2mm; padding:2mm 3mm; font-size:9pt; color:#312e81; width:40mm;">EAGLE</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Initial Audit — Reports -->
+<div class="page page-break">
+  <div class="sec-header purple">
+    <div class="icon">📄</div>
+    <div><div class="num">Section 6 (cont.)</div><h2 style="margin:0;">Downloading Audit Reports</h2></div>
+  </div>
+
+  <div class="section no-break">
+    <h3>6.7 &nbsp;Excel &amp; PDF Reports</h3>
+    <p>Both before and after finalization you can download a full report of the audit items. Two buttons appear in the audit header:</p>
+    <div class="grid2">
+      <div class="card" style="border-left:4px solid #16a34a;">
+        <h4>📗 Download Excel</h4>
+        <p>Green button — downloads an <code>.xlsx</code> file with two sheets:</p>
+        <ul>
+          <li><strong>Audit Info</strong> — metadata (date, branch filter, totals, edited/added counts)</li>
+          <li><strong>Audit Items</strong> — full data table with all columns</li>
+        </ul>
+      </div>
+      <div class="card" style="border-left:4px solid #dc2626;">
+        <h4>📕 Download PDF</h4>
+        <p>Red button — downloads a landscape A4 <code>.pdf</code> with:</p>
+        <ul>
+          <li>Title, audit date, branch, date range, status in header</li>
+          <li>Colour-coded legend explaining column colours</li>
+          <li>Full data table with highlighting</li>
+          <li>Page numbers in footer</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="section no-break">
+    <h3>Report Column Reference</h3>
+    <table>
+      <thead>
+        <tr><th>Column</th><th>Always Present?</th><th>Description</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Ticket No</strong></td><td>✅ Yes</td><td>Pawn ticket number</td></tr>
+        <tr><td><strong>Customer</strong></td><td>✅ Yes</td><td>Customer full name</td></tr>
+        <tr><td><strong>Item Type</strong></td><td>✅ Yes</td><td>System value (before audit)</td></tr>
+        <tr><td><span class="pill pill-amber">Audited Item Type</span></td><td>Only if any type was edited</td><td>Corrected value entered during audit</td></tr>
+        <tr><td><strong>Net Wt (g)</strong></td><td>✅ Yes</td><td>System net weight</td></tr>
+        <tr><td><span class="pill pill-amber">Audited Net Wt (g)</span></td><td>Only if any weight was edited</td><td>Corrected weight</td></tr>
+        <tr><td><strong>Gross Wt (g)</strong></td><td>✅ Yes</td><td>System gross weight</td></tr>
+        <tr><td><span class="pill pill-amber">Audited Gross Wt (g)</span></td><td>Only if any gross weight was edited</td><td>Corrected gross weight</td></tr>
+        <tr><td><strong>Karatage</strong></td><td>✅ Yes</td><td>System karatage value</td></tr>
+        <tr><td><span class="pill pill-amber">Audited Karatage</span></td><td>Only if any karatage was edited</td><td>Corrected karatage</td></tr>
+        <tr><td><strong>Remarks</strong></td><td>✅ Yes</td><td>Remarks text</td></tr>
+        <tr><td><span class="pill pill-amber">Audited Remarks</span></td><td>Only if any remarks were edited</td><td>Corrected remarks</td></tr>
+        <tr><td><span class="pill pill-green">Added in Audit</span></td><td>Only if items were added</td><td>"YES" for items added during this audit session</td></tr>
+      </tbody>
+    </table>
+    <div class="note"><span class="note-icon">💡</span><div><strong>"Audited" columns only appear when needed.</strong> If nothing was corrected during the audit, the report has clean simple columns without the extra "Audited" pairs.</div></div>
+    <div class="info" style="margin-top:2mm;"><span class="info-icon">🎨</span><div>In the <strong>PDF report</strong>: amber-highlighted cells show corrected values; green-highlighted rows mark items added during the audit.</div></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     SECTION 7 — REPORTS & ACTIVITY LOG
+════════════════════════════════════════════════════════════════════════════ -->
+<div class="page page-break">
+  <div class="sec-header green">
+    <div class="icon">📊</div>
+    <div><div class="num">Section 7</div><h2 style="margin:0;">Reports &amp; Activity Log</h2></div>
+  </div>
+
+  <div class="section no-break">
+    <h3>7.1 &nbsp;Reports Page</h3>
+    <p>Navigate to <strong>Reports</strong> for system-wide analytics. This page provides summary statistics and downloadable data exports.</p>
+    <div class="grid2">
+      <div class="card">
+        <h4>📈 Summary Statistics</h4>
+        <ul>
+          <li>Total active items and total weight in stock</li>
+          <li>Total customers and branches</li>
+          <li>Items released this month</li>
+          <li>Audit completion rate</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>📥 CSV Downloads</h4>
+        <ul>
+          <li><strong>Items CSV</strong> — all item records with all fields</li>
+          <li><strong>Customers CSV</strong> — all customer records</li>
+          <li>Use these for external reporting or backup</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="section no-break">
+    <h3>7.2 &nbsp;Activity Log</h3>
+    <p>Navigate to <strong>Activity Log</strong> to see a chronological record of all significant actions performed in the system.</p>
+    <div class="card">
+      <h4>Events Tracked</h4>
+      <div class="grid2">
+        <ul>
+          <li>Item created / edited / released</li>
+          <li>Customer created / updated</li>
+          <li>Branch created / deleted</li>
+        </ul>
+        <ul>
+          <li>Audit started / finalized</li>
+          <li>Barcode scanned</li>
+          <li>CSV import completed</li>
+        </ul>
+      </div>
+    </div>
+    <div class="info"><span class="info-icon">ℹ️</span><div>Each log entry shows the <strong>action type</strong>, the <strong>entity affected</strong>, the <strong>operator</strong> who performed it, and a precise <strong>timestamp</strong>. Activity logs cannot be deleted.</div></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     SECTION 8 — PERMISSIONS REFERENCE
+════════════════════════════════════════════════════════════════════════════ -->
+<div class="page page-break">
+  <div class="sec-header rose">
+    <div class="icon">🔐</div>
+    <div><div class="num">Section 8</div><h2 style="margin:0;">Role Permissions Reference</h2></div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Feature / Action</th>
+        <th style="text-align:center;"><span class="pill pill-gray">USER</span></th>
+        <th style="text-align:center;"><span class="pill pill-navy">ADMIN</span></th>
+        <th style="text-align:center;"><span class="pill pill-magenta">SUPER ADMIN</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td colspan="4" style="background:#f3f4f6; font-weight:700; font-size:8pt; color:#374151;">Items</td></tr>
+      <tr><td>View items list and search</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td></tr>
+      <tr><td>View item detail &amp; barcode</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td></tr>
+      <tr><td>Print barcode</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td></tr>
+      <tr><td>Create new item</td><td style="text-align:center;">—</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td></tr>
+      <tr><td>Edit item fields (type, weight, karatage, remarks)</td><td style="text-align:center;">—</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td></tr>
+      <tr><td>Import items via CSV</td><td style="text-align:center;">—</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td></tr>
+
+      <tr><td colspan="4" style="background:#f3f4f6; font-weight:700; font-size:8pt; color:#374151;">Customers</td></tr>
+      <tr><td>View customer list and profiles</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td></tr>
+      <tr><td>Create / edit customer</td><td style="text-align:center;">—</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td></tr>
+      <tr><td>Import customers via CSV</td><td style="text-align:center;">—</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td></tr>
+
+      <tr><td colspan="4" style="background:#f3f4f6; font-weight:700; font-size:8pt; color:#374151;">Branches</td></tr>
+      <tr><td>View branches</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td></tr>
+      <tr><td>Create / delete branch</td><td style="text-align:center;">—</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td></tr>
+      <tr><td>Assign / remove customers from branch</td><td style="text-align:center;">—</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td></tr>
+
+      <tr><td colspan="4" style="background:#f3f4f6; font-weight:700; font-size:8pt; color:#374151;">Standard Audits</td></tr>
+      <tr><td>View audit list and details</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td></tr>
+      <tr><td>Scan barcodes during audit</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td></tr>
+      <tr><td>Add remarks to scanned items</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td></tr>
+      <tr><td>Correct item type / weight during scan</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td></tr>
+      <tr><td>Create new standard audit</td><td style="text-align:center;">—</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td></tr>
+      <tr><td>Finalize standard audit</td><td style="text-align:center;">—</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td></tr>
+      <tr><td>Bulk release missing items</td><td style="text-align:center;">—</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td></tr>
+
+      <tr><td colspan="4" style="background:#f3f4f6; font-weight:700; font-size:8pt; color:#374151;">Initial Audits</td></tr>
+      <tr><td>View initial audit detail</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td></tr>
+      <tr><td>Create initial audit</td><td style="text-align:center;">—</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td></tr>
+      <tr><td>Edit items during initial audit</td><td style="text-align:center;">—</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td></tr>
+      <tr><td>Add item to ticket</td><td style="text-align:center;">—</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td></tr>
+      <tr><td>Mark ticket complete</td><td style="text-align:center;">—</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td></tr>
+      <tr><td>Finalize initial audit</td><td style="text-align:center;">—</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td></tr>
+      <tr><td>Download Excel / PDF report</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td></tr>
+
+      <tr><td colspan="4" style="background:#f3f4f6; font-weight:700; font-size:8pt; color:#374151;">Reports &amp; Logs</td></tr>
+      <tr><td>View Reports page</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td></tr>
+      <tr><td>Download Reports CSV</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td></tr>
+      <tr><td>View Activity Log</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td></tr>
+    </tbody>
+  </table>
+
+  <div class="footer-strip">
+    <span>Pearl Isle Capital — Pawn Management System</span>
+    <span>User Guide v1.0 · April 2026 · Internal Use Only</span>
+  </div>
+</div>
+
+</body>
+</html>
